@@ -19,7 +19,6 @@
   function storedPaymentId() {
     try { return sessionStorage.getItem(PAYMENT_ID_KEY) || ''; } catch (e) { return ''; }
   }
-
   function claim(paymentId) {
     const token = Store.loadToken();
     if (!token) {
