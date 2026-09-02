@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cape | Frost Store</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex, follow">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="store.css">
+</head>
+<body>
+<div class="topo-bg">
+  <svg viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs><style>.tline{fill:none;stroke:#4fc8f8;stroke-width:1.2;}</style></defs>
+    <path class="tline" d="M-100,200 C100,180 250,240 400,200 S650,140 800,200 S1050,280 1200,220 S1400,160 1500,200"/>
+    <path class="tline" d="M-100,340 C60,320 180,380 360,340 S580,255 740,330 S980,400 1160,345 S1360,290 1500,335"/>
+    <path class="tline" d="M-100,500 C20,480 140,540 320,500 S540,405 700,490 S940,545 1120,490 S1320,440 1500,490"/>
+    <path class="tline" d="M-100,660 C-20,640 100,700 280,660 S500,560 660,645 S900,705 1080,650 S1280,598 1500,648"/>
+    <path class="tline" d="M200,100 C300,80 380,150 450,100 S600,40 700,110 S820,180 940,120 S1100,60 1200,100"/>
+    <path class="tline" d="M250,820 C350,800 430,870 500,820 S650,755 750,825 S870,895 990,835 S1150,775 1250,820"/>
+  </svg>
+</div>
+<canvas id="particles"></canvas>
+
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="/"><img src="favicon.ico" alt="" class="nav-logo-icon"/><span>FROST</span> <span class="nav-logo-store">STORE</span></a>    <ul class="nav-links">
+      <li><a href=".">Capes</a></li>
+      <li><a href="https://frostclient.eu/lite">Frost Lite</a></li>
+      <li><a href="https://frostclient.eu/terms">TOS</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button type="button" class="nav-signin-btn" id="navSigninBtn"><span>Sign in</span></button>
+      <span class="nav-user" id="navUser">
+        <a class="nav-user-link" href="my-capes.html" aria-label="My Capes">
+          <img class="nav-user-avatar" id="navUserAvatar" src="" alt=""/>
+          <span class="nav-user-name" id="navUserName"></span>
+        </a>
+        <button type="button" class="nav-logout-btn" id="navLogoutBtn" aria-label="Sign out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </span>
+    </div>
+  </div>
+</nav>
+
+<main class="detail-page">
+  <a class="detail-back" href=".">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back to catalog
+  </a>
+
+  <div class="detail-layout" id="detailLayout">
+    <div class="detail-preview-panel" id="previewPanel">
+      <div class="skeleton-shimmer detail-preview-skeleton" id="previewSkeleton"></div>
+      <div class="detail-preview-hint" id="previewHint" hidden>Drag to rotate</div>
+    </div>
+    <div class="detail-info" id="detailInfo">
+      <div class="skeleton-shimmer sk-name"></div>
+      <div class="skeleton-shimmer sk-price"></div>
+      <div class="skeleton-shimmer sk-line"></div>
+      <div class="skeleton-shimmer sk-line"></div>
+      <div class="skeleton-shimmer sk-line short"></div>
+      <div class="skeleton-shimmer sk-cta"></div>
+    </div>
+  </div>
+
+  <div class="detail-notfound" id="detailNotfound" hidden>
+    <h2>Cape not found</h2>
+    <p>This cape doesn't exist or isn't available in the store.</p>
+    <a class="detail-cta" href=".">Back to catalog</a>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo">❄ FROST <span class="footer-logo-store">STORE</span></div>
+      <p class="footer-tagline">Capes and cosmetics for the<br/>fastest free Minecraft client.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Store</h4>
+      <a href=".">Cape Catalog</a>
+      <a href="https://frostclient.eu/lite">Frost Lite</a>
+      <a href="https://frostclient.eu">Main Website</a>
+      <a href="https://frostclient.eu/?openDownload">Download Frost</a>
+    </div>
+    <div class="footer-col">
+      <h4>Account</h4>
+      <button type="button" class="footer-link-btn" id="footerSigninBtn">Sign in</button>
+      <a href="my-capes.html">My Capes</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="https://frostclient.eu/faq">FAQ</a>
+      <a href="https://frostclient.eu/privacy">Privacy Policy</a>
+      <a href="https://frostclient.eu/terms">Terms of Service</a>
+      <a href="https://frostclient.eu/imprint">Imprint</a>
+    </div>
+    <div class="footer-col">
+      <h4>Community</h4>
+      <div class="footer-social-icons">
+        <a href="https://discord.gg/Kn8ydsABU8" target="_blank" aria-label="Discord"><img src="icons/discord.webp" alt="Discord"/></a>
+        <a href="https://www.youtube.com/@frost-client" target="_blank" aria-label="YouTube"><img src="icons/youtube.webp" alt="YouTube"/></a>
+        <a href="https://www.tiktok.com/@frostclient.eu" target="_blank" aria-label="TikTok"><img src="icons/tiktok.webp" alt="TikTok"/></a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© Frost 2026. All rights reserved.<br>Made by: Zipp</span>
+    <span>Not affiliated with Minecraft or Mojang.</span>
+  </div>
+</footer>
+
+<script src="skinview3d.js"></script>
+<script src="store.js"></script>
+<script src="cape.js"></script>
+</body>
+</html>

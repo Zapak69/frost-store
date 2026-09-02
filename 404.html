@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Page Not Found | Frost Store</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex, nofollow">
+<style>
+:root {
+  --bg: #000000; --surface: #1c1c1e; --surface2: #2c2c2e;
+  --frost-blue: #4fc8f8; --frost-deep: #1a7fc4; --frost-glow: #0a84ff;
+  --text: #f5f5f7; --muted: #86868b; --border: rgba(255,255,255,0.1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Space Grotesk', sans-serif; overflow-x: hidden; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px; height: 68px;
+  backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  background: rgba(0,0,0,0.6);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo { display: inline-flex; align-items: center; gap: 9px; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); text-decoration: none; transition: opacity 0.2s; }
+.nav-logo:hover { opacity: 0.85; }
+.nav-logo-icon { width: 20px; height: 20px; }
+.nav-logo-store { color: var(--frost-blue); font-weight: 600; }
+.nav-back { color: var(--muted); font-size: 14px; text-decoration: none; transition: color 0.2s; }
+.nav-back:hover { color: var(--text); }
+@media (max-width: 480px) { nav { padding: 0 16px; } .nav-back { font-size: 12px; } }
+
+.page { position: relative; z-index: 1; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 140px 24px 80px; text-align: center; }
+.content { max-width: 520px; animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .content { animation: none; } }
+
+.error-code { font-size: clamp(72px, 16vw, 140px); font-weight: 700; letter-spacing: -4px; line-height: 1; color: var(--text); }
+
+h1 { font-size: clamp(20px, 3.5vw, 26px); font-weight: 700; letter-spacing: -0.3px; margin: 18px 0 12px; }
+.content p { font-size: 14.5px; color: var(--muted); line-height: 1.7; margin-bottom: 32px; }
+
+.links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--frost-blue); color: #06121c;
+  text-decoration: none; font-weight: 600; font-size: 14.5px;
+  padding: 13px 26px; border-radius: 980px;
+  transition: filter 0.2s, transform 0.2s;
+}
+.btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-outline {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: transparent; color: var(--text);
+  border: 1px solid var(--border); text-decoration: none; font-weight: 600; font-size: 14.5px;
+  padding: 12px 25px; border-radius: 980px;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+}
+.btn-outline:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.05); transform: translateY(-1px); }
+</style>
+</head>
+<body>
+
+<nav>
+    <a class="nav-logo" href="/"><img src="favicon.ico" alt="" class="nav-logo-icon"/><span>FROST</span> <span class="nav-logo-store">STORE</span></a>  <a class="nav-back" href="/">← Back to the Store</a>
+</nav>
+
+<div class="page">
+  <div class="content">
+    <div class="error-code">404</div>
+    <h1>This page doesn't exist</h1>
+    <p>The page you're looking for was moved, renamed, or never existed in the first place. The capes are still where you left them, though.</p>
+    <div class="links">
+      <a class="btn-primary" href="/">Browse Capes</a>
+      <a class="btn-outline" href="https://frostclient.eu">Main Website</a>
+      <a class="btn-outline" href="https://discord.gg/Kn8ydsABU8" target="_blank">Discord</a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
