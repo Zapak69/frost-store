@@ -5,8 +5,8 @@
   const onComingSoon = /(^|\/)coming-soon\.html$/.test(location.pathname);
 
   if (hasAccess && onComingSoon) {
-    location.replace('index.html');
+    location.replace('index');
   } else if (!hasAccess && !onComingSoon) {
-    location.replace('coming-soon.html');
+    location.replace('coming-soon');
   }
 })();
