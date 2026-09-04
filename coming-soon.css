@@ -1,0 +1,60 @@
+  :root {
+    --bg: #000000; --frost-blue: #4fc8f8; --text: #f5f5f7; --muted: #86868b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: var(--bg); overflow: hidden; }
+  body {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Space Grotesk', sans-serif; position: relative;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .topo-bg, #particles { display: none; }
+  #cursor-glow {
+    position: fixed; left: 0; top: 0; width: 520px; height: 520px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(79,200,248,0.07) 0%, rgba(79,200,248,0.03) 40%, transparent 70%);
+    pointer-events: none; z-index: 3; opacity: 0; will-change: transform, opacity;
+    transition: opacity 0.35s ease; mix-blend-mode: screen;
+  }
+
+  .content {
+    position: relative; z-index: 1; text-align: center;
+    animation: fadeInUp 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .wordmark {
+    display: inline-flex; align-items: center; gap: 8px; margin-bottom: 28px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase; color: var(--frost-blue);
+    opacity: 0.9;
+  }
+  .wordmark::before, .wordmark::after {
+    content: ''; width: 28px; height: 1px; background: var(--frost-blue); opacity: 0.4;
+  }
+
+  h1 {
+    font-size: clamp(40px, 9vw, 100px);
+    font-weight: 700; letter-spacing: -2px; line-height: 1;
+    color: var(--frost-blue);
+  }
+
+  .underline {
+    width: 120px; height: 2px; margin: 30px auto 0;
+    background: linear-gradient(90deg, transparent, var(--frost-blue), transparent);
+    animation: underlinePulse 2.4s ease-in-out infinite;
+  }
+
+  .sub { margin-top: 22px; font-size: 14px; letter-spacing: 0.3px; color: var(--muted); }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes underlinePulse {
+    0%, 100% { opacity: 0.35; transform: scaleX(0.8); }
+    50% { opacity: 1; transform: scaleX(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .content, .underline { animation: none; }
+  }
