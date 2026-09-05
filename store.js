@@ -189,23 +189,80 @@
     return 'https://cdn.discordapp.com/embed/avatars/' + idx + '.png';
   }
 
+  const ICON_USER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+  const ICON_CAPE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>';
+  const ICON_LOGOUT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>';
+  const MANAGE_URL = 'https://frostclient.eu/#account';
+  let navMenu = null;
+
+  function positionNavMenu() {
+    const btn = document.getElementById('navUserBtn');
+    if (!navMenu || !btn) return;
+    const r = btn.getBoundingClientRect();
+    navMenu.style.top = Math.round(r.bottom + 8) + 'px';
+    navMenu.style.right = Math.max(8, Math.round(window.innerWidth - r.right)) + 'px';
+  }
+  function ensureNavMenu() {
+    if (navMenu) return navMenu;
+    navMenu = document.createElement('div');
+    navMenu.className = 'frost-nav-menu';
+    navMenu.setAttribute('role', 'menu');
+    navMenu.innerHTML =
+      '<a class="frost-nav-menu-item frost-nav-manage" role="menuitem" href="' + MANAGE_URL + '">' + ICON_USER + 'Manage</a>' +
+      '<a class="frost-nav-menu-item frost-nav-capes" role="menuitem" href="my-capes">' + ICON_CAPE + 'My Capes</a>' +
+      '<button type="button" class="frost-nav-menu-item is-danger frost-nav-signout" role="menuitem">' + ICON_LOGOUT + 'Sign Out</button>';
+    navMenu.querySelector('.frost-nav-manage').addEventListener('click', closeNavMenu);
+    navMenu.querySelector('.frost-nav-capes').addEventListener('click', closeNavMenu);
+    navMenu.querySelector('.frost-nav-signout').addEventListener('click', function () {
+      closeNavMenu();
+      clearAuth();
+      updateNav();
+    });
+    document.body.appendChild(navMenu);
+    return navMenu;
+  }
+  function closeNavMenu() {
+    if (!navMenu) return;
+    navMenu.classList.remove('open');
+    const btn = document.getElementById('navUserBtn');
+    if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); }
+  }
+  function toggleNavMenu() {
+    const btn = document.getElementById('navUserBtn');
+    const menu = ensureNavMenu();
+    const open = !menu.classList.contains('open');
+    if (open) positionNavMenu();
+    menu.classList.toggle('open', open);
+    if (btn) { btn.classList.toggle('open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+  }
+  document.addEventListener('click', function (e) {
+    if (!navMenu || !navMenu.classList.contains('open')) return;
+    const btn = document.getElementById('navUserBtn');
+    if ((btn && btn.contains(e.target)) || navMenu.contains(e.target)) return;
+    closeNavMenu();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeNavMenu(); });
+  window.addEventListener('resize', function () { if (navMenu && navMenu.classList.contains('open')) positionNavMenu(); });
+
   function updateNav() {
     const signinBtn = document.getElementById('navSigninBtn');
-    const userChip = document.getElementById('navUser');
+    const userBtn = document.getElementById('navUserBtn');
     const token = loadToken();
     const user = (profileCache && profileCache.user) || (token ? loadCachedUser() : null);
     const loggedIn = !!(token && user);
-    if (signinBtn && userChip) {
+    if (signinBtn && userBtn) {
+      signinBtn.hidden = loggedIn;
+      userBtn.hidden = !loggedIn;
       if (loggedIn) {
-        signinBtn.style.display = 'none';
-        userChip.classList.add('visible');
-        document.getElementById('navUserAvatar').src = avatarUrl(user);
+        const avatar = document.getElementById('navUserAvatar');
+        avatar.style.display = '';
+        avatar.src = avatarUrl(user);
         document.getElementById('navUserName').textContent = user.name || user.username || 'Account';
       } else {
-        signinBtn.style.display = '';
-        userChip.classList.remove('visible');
+        closeNavMenu();
       }
-      userChip.classList.toggle('lite', !!(profileCache && profileCache.liteActive));
+      const cachedProfile = loadCachedProfile();
+      userBtn.classList.toggle('is-lite', loggedIn && !!((profileCache && profileCache.liteActive) || (!profileCache && cachedProfile && cachedProfile.liteActive)));
     }
     const footerBtn = document.getElementById('footerSigninBtn');
     if (footerBtn) footerBtn.textContent = loggedIn ? 'Logout' : 'Sign in';
@@ -254,26 +311,102 @@
     return !!(profile && profile.owned && profile.owned.indexOf(cape.id) !== -1);
   }
 
+  const PREVIEW_W = 260;
+  const PREVIEW_H = 392;
+  const PREVIEW_CAMERA_DISTANCE = 27;
+  let previewViewer = null;
+  let previewQueue = Promise.resolve();
+  const previewCache = {};
+
+  function getPreviewViewer() {
+    if (previewViewer) return previewViewer;
+    if (typeof skinview3d === 'undefined') return null;
+    try {
+      const viewer = new skinview3d.SkinViewer({
+        canvas: document.createElement('canvas'),
+        width: PREVIEW_W,
+        height: PREVIEW_H,
+        renderPaused: true,
+        preserveDrawingBuffer: true
+      });
+      viewer.controls.enabled = false;
+      viewer.autoRotate = false;
+      viewer.playerObject.rotation.y = Math.PI;
+      viewer.playerObject.skin.visible = false;
+      viewer.controls.target.set(0, 0, 0);
+      viewer.camera.position.set(0, 0, PREVIEW_CAMERA_DISTANCE);
+      viewer.camera.lookAt(0, 0, 0);
+      previewViewer = viewer;
+    } catch (err) {
+      previewViewer = null;
+    }
+    return previewViewer;
+  }
+
+  function fetchCapeObjectUrl(file) {
+    return fetch(CAPES_BASE + encodeURIComponent(file), { cache: 'force-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('http_' + r.status);
+        return r.blob();
+      })
+      .then(function (blob) { return URL.createObjectURL(blob); });
+  }
+
+  function renderCapePreview(cape) {
+    const key = cape.file;
+    if (previewCache[key]) return previewCache[key];
+    const viewer = getPreviewViewer();
+    if (!viewer) return Promise.reject(new Error('no_viewer'));
+    const job = previewQueue.catch(function () {}).then(function () {
+      return fetchCapeObjectUrl(cape.file).then(function (url) {
+        return viewer.loadCape(url).then(function () {
+          URL.revokeObjectURL(url);
+          viewer.playerObject.skin.visible = false;
+          viewer.playerObject.cape.visible = true;
+          viewer.controls.update();
+          viewer.render();
+          return viewer.canvas.toDataURL('image/png');
+        });
+      });
+    });
+    previewQueue = job;
+    previewCache[key] = job;
+    job.catch(function () { delete previewCache[key]; });
+    return job;
+  }
+
+  function buildCapePreview(cape) {
+    const previewWrap = document.createElement('div');
+    previewWrap.className = 'cape-card-preview-wrap';
+    const flat = document.createElement('div');
+    flat.className = 'cape-card-preview';
+    flat.style.backgroundImage = 'url(' + CAPES_BASE + encodeURIComponent(cape.file) + ')';
+    previewWrap.appendChild(flat);
+    renderCapePreview(cape).then(function (dataUrl) {
+      const img = document.createElement('img');
+      img.className = 'cape-card-preview-img is-3d';
+      img.alt = '';
+      img.src = dataUrl;
+      img.addEventListener('load', function () { img.classList.add('ready'); });
+      previewWrap.replaceChild(img, flat);
+    }).catch(function () {
+      if (cape.store && cape.store.preview) {
+        const img = document.createElement('img');
+        img.className = 'cape-card-preview-img';
+        img.src = CAPES_BASE + cape.store.preview.split('/').map(encodeURIComponent).join('/');
+        img.alt = '';
+        img.loading = 'lazy';
+        previewWrap.replaceChild(img, flat);
+      }
+    });
+    return previewWrap;
+  }
+
   function buildCapeCard(cape, profile) {
     const card = document.createElement('a');
     card.className = 'cape-card';
     card.href = 'cape?id=' + encodeURIComponent(cape.id);
-    const previewWrap = document.createElement('div');
-    previewWrap.className = 'cape-card-preview-wrap';
-    if (cape.store && cape.store.preview) {
-      const img = document.createElement('img');
-      img.className = 'cape-card-preview-img';
-      img.src = CAPES_BASE + cape.store.preview.split('/').map(encodeURIComponent).join('/');
-      img.alt = '';
-      img.loading = 'lazy';
-      previewWrap.appendChild(img);
-    } else {
-      const preview = document.createElement('div');
-      preview.className = 'cape-card-preview';
-      preview.style.backgroundImage = 'url(' + CAPES_BASE + encodeURIComponent(cape.file) + ')';
-      previewWrap.appendChild(preview);
-    }
-    card.appendChild(previewWrap);
+    card.appendChild(buildCapePreview(cape));
     const name = document.createElement('div');
     name.className = 'cape-card-name';
     name.textContent = cape.name || cape.id;
@@ -306,11 +439,10 @@
       if (loadToken()) clearAuth();
       else startLogin('store');
     });
-    const logoutBtn = document.getElementById('navLogoutBtn');
-    if (logoutBtn) logoutBtn.addEventListener('click', function () {
-      clearAuth();
-      updateNav();
-    });
+    const userBtn = document.getElementById('navUserBtn');
+    if (userBtn) userBtn.addEventListener('click', toggleNavMenu);
+    const avatar = document.getElementById('navUserAvatar');
+    if (avatar) avatar.addEventListener('error', function () { avatar.style.display = 'none'; });
   }
 
   function init() {

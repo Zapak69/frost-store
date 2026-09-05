@@ -33,19 +33,10 @@
     <ul class="nav-links">
       <li><a href="." class="active">Capes</a></li>
       <li><a href="https://frostclient.eu/lite">Lite</a></li>
-      <li><a href="https://frostclient.eu/terms">TOS</a></li>
     </ul>
     <div class="nav-actions">
       <button type="button" class="nav-signin-btn" id="navSigninBtn"><span>Sign in</span></button>
-      <span class="nav-user" id="navUser">
-        <a class="nav-user-link" href="my-capes" aria-label="My Capes">
-          <img class="nav-user-avatar" id="navUserAvatar" src="" alt=""/>
-          <span class="nav-user-name" id="navUserName"></span>
-        </a>
-        <button type="button" class="nav-logout-btn" id="navLogoutBtn" aria-label="Sign out">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </button>
-      </span>
+      <button type="button" class="nav-signin-btn frost-nav-pill" id="navUserBtn" hidden aria-haspopup="true"><img class="frost-nav-avatar" id="navUserAvatar" src="" alt=""/><span class="frost-nav-name" id="navUserName"></span><svg class="frost-nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
     </div>
   </div>
 </nav>
@@ -123,6 +114,7 @@
   </div>
 </footer>
 
+<script src="skinview3d.js"></script>
 <script src="store.js"></script>
 </body>
 </html>
