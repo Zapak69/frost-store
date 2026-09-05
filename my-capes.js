@@ -50,7 +50,7 @@
       return;
     }
     owned.forEach(function (cape) {
-      grid.appendChild(Store.buildCapeCard(cape, profile));
+      grid.appendChild(Store.buildCapeCard(cape, profile, { hideOwnedBadge: true }));
     });
   }
 

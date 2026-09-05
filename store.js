@@ -405,7 +405,7 @@
     return previewWrap;
   }
 
-  function buildCapeCard(cape, profile) {
+  function buildCapeCard(cape, profile, options) {
     const card = document.createElement('a');
     card.className = 'cape-card';
     card.href = 'cape?id=' + encodeURIComponent(cape.id);
@@ -425,7 +425,7 @@
       anim.textContent = 'ANIMATED';
       card.appendChild(anim);
     }
-    if (isOwned(cape, profile)) {
+    if (isOwned(cape, profile) && !(options && options.hideOwnedBadge)) {
       const owned = document.createElement('span');
       owned.className = 'cape-owned-badge';
       owned.textContent = 'OWNED';
