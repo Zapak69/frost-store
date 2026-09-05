@@ -313,7 +313,10 @@
 
   const PREVIEW_W = 260;
   const PREVIEW_H = 392;
-  const PREVIEW_CAMERA_DISTANCE = 27;
+  const PREVIEW_CAMERA_DISTANCE = 24;
+  const PREVIEW_CAMERA_Y = 9;
+  const PREVIEW_TARGET_Y = -0.5;
+  const PREVIEW_YAW = 0.5;
   let previewViewer = null;
   let previewQueue = Promise.resolve();
   const previewCache = {};
@@ -331,11 +334,11 @@
       });
       viewer.controls.enabled = false;
       viewer.autoRotate = false;
-      viewer.playerObject.rotation.y = Math.PI;
+      viewer.playerObject.rotation.y = Math.PI + PREVIEW_YAW;
       viewer.playerObject.skin.visible = false;
-      viewer.controls.target.set(0, 0, 0);
-      viewer.camera.position.set(0, 0, PREVIEW_CAMERA_DISTANCE);
-      viewer.camera.lookAt(0, 0, 0);
+      viewer.controls.target.set(0, PREVIEW_TARGET_Y, 0);
+      viewer.camera.position.set(0, PREVIEW_CAMERA_Y, PREVIEW_CAMERA_DISTANCE);
+      viewer.camera.lookAt(0, PREVIEW_TARGET_Y, 0);
       previewViewer = viewer;
     } catch (err) {
       previewViewer = null;
