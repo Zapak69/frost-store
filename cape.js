@@ -5,6 +5,163 @@
   const notFound = document.getElementById('detailNotfound');
   const info = document.getElementById('detailInfo');
   const previewPanel = document.getElementById('previewPanel');
+  const BOT_BASE = 'https://bot.frostclient.eu';
+  const SKIN_KEY = 'frostStoreSkin';
+  let viewer = null;
+  let mySkinInfo = null;
+  let mySkinCheckedFor = null;
+
+  function loadSavedSkin() {
+    try { return JSON.parse(localStorage.getItem(SKIN_KEY) || 'null'); } catch (e) { return null; }
+  }
+  function saveSkin(skin) {
+    try {
+      if (skin) localStorage.setItem(SKIN_KEY, JSON.stringify(skin));
+      else localStorage.removeItem(SKIN_KEY);
+    } catch (e) {}
+    updateSkinMenuState();
+  }
+  function loadDefaultSkin(v) {
+    return fetchObjectUrl('skin.png').then(function (url) { return v.loadSkin(url); });
+  }
+  function applySkin(v, skin) {
+    if (!skin || !skin.skinUrl) return loadDefaultSkin(v);
+    const result = v.loadSkin(skin.skinUrl, { model: skin.model === 'slim' ? 'slim' : (skin.model === 'default' ? 'default' : 'auto-detect') });
+    return Promise.resolve(result);
+  }
+  function loadInitialSkin(v) {
+    const saved = loadSavedSkin();
+    if (!saved || !saved.skinUrl) return loadDefaultSkin(v);
+    return applySkin(v, saved).catch(function () {
+      saveSkin(null);
+      return loadDefaultSkin(v);
+    });
+  }
+
+  const skinMenuWrap = document.getElementById('skinMenuWrap');
+  const skinMenuBtn = document.getElementById('skinMenuBtn');
+  const skinMenu = document.getElementById('skinMenu');
+  const skinMenuMine = document.getElementById('skinMenuMine');
+  const skinMenuByName = document.getElementById('skinMenuByName');
+  const skinMenuDefault = document.getElementById('skinMenuDefault');
+  const skinModal = document.getElementById('skinModal');
+  const skinModalForm = document.getElementById('skinModalForm');
+  const skinNameInput = document.getElementById('skinNameInput');
+  const skinModalSubmit = document.getElementById('skinModalSubmit');
+  const skinModalError = document.getElementById('skinModalError');
+
+  function updateSkinMenuState() {
+    const saved = loadSavedSkin();
+    skinMenuDefault.hidden = !saved;
+    skinMenuMine.classList.toggle('is-active', !!(saved && saved.source === 'mine'));
+    skinMenuByName.classList.toggle('is-active', !!(saved && saved.source === 'name'));
+  }
+  function setSkinMenuOpen(open) {
+    skinMenu.classList.toggle('open', open);
+    skinMenuBtn.classList.toggle('open', open);
+    skinMenuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  function refreshMySkinItem() {
+    const token = Store.loadToken();
+    if (!token) {
+      mySkinInfo = null;
+      mySkinCheckedFor = null;
+      skinMenuMine.hidden = true;
+      return;
+    }
+    if (mySkinCheckedFor === token) return;
+    mySkinCheckedFor = token;
+    fetch(BOT_BASE + '/launcher/my-skin?token=' + encodeURIComponent(token), { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (mySkinCheckedFor !== token) return;
+        mySkinInfo = data && data.ok && data.linked && data.skinUrl ? data : null;
+        skinMenuMine.hidden = !mySkinInfo;
+      })
+      .catch(function () {
+        if (mySkinCheckedFor === token) mySkinCheckedFor = null;
+      });
+  }
+  function showSkinError(msg) {
+    skinModalError.textContent = msg;
+    skinModalError.hidden = !msg;
+  }
+  function openSkinModal() {
+    showSkinError('');
+    skinModal.hidden = false;
+    setTimeout(function () { skinNameInput.focus(); }, 30);
+  }
+  function closeSkinModal() {
+    skinModal.hidden = true;
+    skinModalSubmit.classList.remove('is-loading');
+  }
+
+  skinMenuBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    setSkinMenuOpen(!skinMenu.classList.contains('open'));
+  });
+  document.addEventListener('click', function (e) {
+    if (!skinMenu.classList.contains('open')) return;
+    if (skinMenuWrap.contains(e.target)) return;
+    setSkinMenuOpen(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    setSkinMenuOpen(false);
+    if (!skinModal.hidden) closeSkinModal();
+  });
+  skinMenuByName.addEventListener('click', function () {
+    setSkinMenuOpen(false);
+    openSkinModal();
+  });
+  skinMenuMine.addEventListener('click', function () {
+    setSkinMenuOpen(false);
+    if (!viewer || !mySkinInfo) return;
+    const skin = { source: 'mine', name: mySkinInfo.username || '', skinUrl: mySkinInfo.skinUrl, model: mySkinInfo.model || 'auto-detect' };
+    applySkin(viewer, skin).then(function () { saveSkin(skin); }).catch(function () {});
+  });
+  skinMenuDefault.addEventListener('click', function () {
+    setSkinMenuOpen(false);
+    if (!viewer) return;
+    loadDefaultSkin(viewer).then(function () { saveSkin(null); }).catch(function () {});
+  });
+  document.getElementById('skinModalClose').addEventListener('click', closeSkinModal);
+  skinModal.addEventListener('click', function (e) { if (e.target === skinModal) closeSkinModal(); });
+  skinModalForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const name = skinNameInput.value.trim();
+    if (!/^[A-Za-z0-9_]{1,16}$/.test(name)) {
+      showSkinError('Usernames are 1-16 letters, numbers or underscores.');
+      return;
+    }
+    if (!viewer) return;
+    showSkinError('');
+    skinModalSubmit.classList.add('is-loading');
+    fetch(BOT_BASE + '/launcher/skin-lookup?name=' + encodeURIComponent(name), { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.ok || !data.skinUrl) {
+          skinModalSubmit.classList.remove('is-loading');
+          showSkinError(data && data.error === 'not_found' ? "That player doesn't exist or has no skin." : "Couldn't load that skin right now. Please try again.");
+          return;
+        }
+        const skin = { source: 'name', name: data.name || name, skinUrl: data.skinUrl, model: data.model || 'auto-detect' };
+        return applySkin(viewer, skin).then(function () {
+          saveSkin(skin);
+          closeSkinModal();
+          skinNameInput.value = '';
+        }).catch(function () {
+          skinModalSubmit.classList.remove('is-loading');
+          showSkinError("Couldn't load that skin texture. Please try again.");
+        });
+      })
+      .catch(function () {
+        skinModalSubmit.classList.remove('is-loading');
+        showSkinError('Network error while looking up the player. Please try again.');
+      });
+  });
+  Store.onProfile(function () { refreshMySkinItem(); });
+  updateSkinMenuState();
   let cape = null;
   let viewerStarted = false;
 
@@ -294,7 +451,7 @@
     const canvas = document.createElement('canvas');
     previewPanel.appendChild(canvas);
     const size = Math.min(previewPanel.clientWidth || 460, 620);
-    const viewer = new skinview3d.SkinViewer({
+    viewer = new skinview3d.SkinViewer({
       canvas: canvas,
       width: size,
       height: size,
@@ -307,7 +464,7 @@
     viewer.playerObject.rotation.y = Math.PI;
     viewer.controls.addEventListener('start', function () { viewer.autoRotate = false; });
     Promise.all([
-      fetchObjectUrl('skin.png').then(function (url) { return viewer.loadSkin(url); }),
+      loadInitialSkin(viewer),
       fetchObjectUrl(Store.capesBase + encodeURIComponent(cape.file)).then(function (url) {
         staticCapeUrl = url;
         return viewer.loadCape(url);
@@ -317,9 +474,12 @@
       if (skeleton) skeleton.remove();
       const hint = document.getElementById('previewHint');
       if (hint) hint.hidden = false;
+      skinMenuWrap.hidden = false;
+      updateSkinMenuState();
       startCapeAnimation(viewer);
     }).catch(function () {
       viewerStarted = false;
+      viewer = null;
       canvas.remove();
       const skeleton = document.getElementById('previewSkeleton');
       if (skeleton) skeleton.classList.remove('skeleton-shimmer');
