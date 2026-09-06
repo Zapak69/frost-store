@@ -172,6 +172,20 @@ nav.nav-scrolled {
 .cape-price-pill.pill-annual { background: rgba(255,214,10,0.12); color: var(--gold); border-color: rgba(255,214,10,0.4); }
 .cape-price-pill.pill-reward { background: rgba(50,90,255,0.14); color: #7aa9ff; border-color: rgba(122,169,255,0.35); }
 .cape-price-pill.pill-soon { background: rgba(255,255,255,0.05); color: var(--muted-dim); border-color: var(--border); }
+.cape-price-pill.pill-sale { display: inline-flex; align-items: center; gap: 7px; }
+.cape-price-old { color: var(--muted); font-weight: 500; text-decoration: line-through; }
+.cape-sale-badge {
+  position: absolute; top: 12px; left: 12px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.6px;
+  color: #fff; background: #ff453a;
+  padding: 4px 9px; border-radius: 980px;
+}
+.cape-sale-badge ~ .cape-animated-badge { top: 40px; }
+.detail-price-old { font-size: 18px; font-weight: 500; color: var(--muted); text-decoration: line-through; }
+.detail-sale-badge {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+  color: #fff; background: #ff453a; padding: 5px 10px; border-radius: 980px;
+}
 .cape-owned-badge {
   position: absolute; top: 12px; right: 12px;
   font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px;

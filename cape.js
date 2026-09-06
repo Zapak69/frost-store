@@ -187,7 +187,8 @@
     if (store.subscription) return { text: store.subscription === 'annual' ? 'Annual Lite perk' : 'Lite perk', pill: store.subscription === 'annual' ? 'pill-annual' : 'pill-lite' };
     if (store.price === 0 || store.price === 'free') return { text: 'Free', pill: 'pill-free' };
     if (typeof store.price === 'number') {
-      return { text: '€' + store.price.toFixed(2), pill: null };
+      const sale = store.checkout ? Store.salePrice(cape) : null;
+      return { text: '€' + store.price.toFixed(2), pill: null, original: sale ? '€' + sale.original.toFixed(2) : null, percent: sale ? sale.percent : 0 };
     }
     return { text: 'Coming soon', pill: 'pill-soon' };
   }
@@ -292,10 +293,22 @@
       pill.textContent = price.text.toUpperCase();
       priceRow.appendChild(pill);
     } else {
+      if (price.original) {
+        const old = document.createElement('s');
+        old.className = 'detail-price-old';
+        old.textContent = price.original;
+        priceRow.appendChild(old);
+      }
       const amount = document.createElement('span');
       amount.className = 'detail-price';
       amount.textContent = price.text;
       priceRow.appendChild(amount);
+      if (price.original) {
+        const sale = document.createElement('span');
+        sale.className = 'detail-sale-badge';
+        sale.textContent = 'SALE -' + price.percent + '%';
+        priceRow.appendChild(sale);
+      }
     }
     info.appendChild(priceRow);
     const meta = document.createElement('div');

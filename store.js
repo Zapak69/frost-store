@@ -289,6 +289,7 @@
     priceValue: priceValue,
     pricePill: pricePill,
     isOwned: isOwned,
+    salePrice: salePrice,
     buildCapeCard: buildCapeCard
   };
 
@@ -297,12 +298,19 @@
     return typeof store.price === 'number' ? store.price : Infinity;
   }
 
+  function salePrice(cape) {
+    const store = cape.store || {};
+    if (typeof store.price !== 'number' || typeof store.originalPrice !== 'number' || store.originalPrice <= store.price) return null;
+    return { original: store.originalPrice, percent: Math.round((1 - store.price / store.originalPrice) * 100) };
+  }
+
   function pricePill(cape) {
     const store = cape.store || {};
     if (store.subscription) return { text: store.subscription === 'annual' ? 'ANNUAL LITE' : 'LITE', cls: store.subscription === 'annual' ? 'pill-annual' : 'pill-lite' };
     if (store.price === 0 || store.price === 'free') return { text: 'FREE', cls: 'pill-free' };
     if (typeof store.price === 'number') {
-      return { text: '€' + store.price.toFixed(2), cls: store.checkout ? '' : 'pill-soon' };
+      const sale = salePrice(cape);
+      return { text: '€' + store.price.toFixed(2), cls: store.checkout ? (sale ? 'pill-sale' : '') : 'pill-soon', original: sale && store.checkout ? '€' + sale.original.toFixed(2) : null, percent: sale ? sale.percent : 0 };
     }
     return { text: 'COMING SOON', cls: 'pill-soon' };
   }
@@ -417,7 +425,19 @@
     const pill = pricePill(cape);
     const pillEl = document.createElement('span');
     pillEl.className = 'cape-price-pill' + (pill.cls ? ' ' + pill.cls : '');
-    pillEl.textContent = pill.text;
+    if (pill.original) {
+      const old = document.createElement('s');
+      old.className = 'cape-price-old';
+      old.textContent = pill.original;
+      pillEl.appendChild(old);
+      pillEl.appendChild(document.createTextNode(pill.text));
+      const sale = document.createElement('span');
+      sale.className = 'cape-sale-badge';
+      sale.textContent = '-' + pill.percent + '%';
+      card.appendChild(sale);
+    } else {
+      pillEl.textContent = pill.text;
+    }
     card.appendChild(pillEl);
     if (cape.animated) {
       const anim = document.createElement('span');
