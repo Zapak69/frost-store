@@ -413,7 +413,7 @@
     return previewWrap;
   }
 
-  function buildCapeCard(cape, profile, options) {
+  function buildCapeCard(cape, profile) {
     const card = document.createElement('a');
     card.className = 'cape-card';
     card.href = 'cape?id=' + encodeURIComponent(cape.id);
@@ -423,7 +423,7 @@
     name.textContent = cape.name || cape.id;
     card.appendChild(name);
     const owned = isOwned(cape, profile);
-    const pill = owned && options && options.ownedPill ? { text: 'OWNED', cls: 'pill-owned' } : pricePill(cape);
+    const pill = owned ? { text: 'OWNED', cls: 'pill-owned' } : pricePill(cape);
     const pillEl = document.createElement('span');
     pillEl.className = 'cape-price-pill' + (pill.cls ? ' ' + pill.cls : '');
     if (pill.original) {
@@ -445,12 +445,6 @@
       anim.className = 'cape-animated-badge';
       anim.textContent = 'ANIMATED';
       card.appendChild(anim);
-    }
-    if (owned && !(options && options.hideOwnedBadge)) {
-      const ownedBadge = document.createElement('span');
-      ownedBadge.className = 'cape-owned-badge';
-      ownedBadge.textContent = 'OWNED';
-      card.appendChild(ownedBadge);
     }
     return card;
   }
