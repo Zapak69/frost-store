@@ -173,6 +173,7 @@ nav.nav-scrolled {
 .cape-price-pill.pill-reward { background: rgba(50,90,255,0.14); color: #7aa9ff; border-color: rgba(122,169,255,0.35); }
 .cape-price-pill.pill-soon { background: rgba(255,255,255,0.05); color: var(--muted-dim); border-color: var(--border); }
 .cape-price-pill.pill-sale { display: inline-flex; align-items: center; gap: 7px; }
+.cape-price-pill.pill-owned { background: rgba(50,215,75,0.14); color: var(--owned); border-color: rgba(50,215,75,0.4); }
 .cape-price-old { color: var(--muted); font-weight: 500; text-decoration: line-through; }
 .cape-sale-badge {
   position: absolute; top: 12px; left: 12px;

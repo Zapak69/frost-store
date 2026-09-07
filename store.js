@@ -422,7 +422,8 @@
     name.className = 'cape-card-name';
     name.textContent = cape.name || cape.id;
     card.appendChild(name);
-    const pill = pricePill(cape);
+    const owned = isOwned(cape, profile);
+    const pill = owned && options && options.ownedPill ? { text: 'OWNED', cls: 'pill-owned' } : pricePill(cape);
     const pillEl = document.createElement('span');
     pillEl.className = 'cape-price-pill' + (pill.cls ? ' ' + pill.cls : '');
     if (pill.original) {
@@ -445,11 +446,11 @@
       anim.textContent = 'ANIMATED';
       card.appendChild(anim);
     }
-    if (isOwned(cape, profile) && !(options && options.hideOwnedBadge)) {
-      const owned = document.createElement('span');
-      owned.className = 'cape-owned-badge';
-      owned.textContent = 'OWNED';
-      card.appendChild(owned);
+    if (owned && !(options && options.hideOwnedBadge)) {
+      const ownedBadge = document.createElement('span');
+      ownedBadge.className = 'cape-owned-badge';
+      ownedBadge.textContent = 'OWNED';
+      card.appendChild(ownedBadge);
     }
     return card;
   }
