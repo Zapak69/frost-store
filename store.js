@@ -84,7 +84,26 @@
       });
   }
 
+  let authPending = false;
+  function setAuthPending(pending) {
+    authPending = pending;
+    const signinBtn = document.getElementById('navSigninBtn');
+    if (signinBtn) {
+      signinBtn.classList.toggle('is-loading', pending);
+      signinBtn.disabled = pending;
+      const label = signinBtn.querySelector('span');
+      if (label) label.textContent = pending ? 'Signing in…' : 'Sign in';
+    }
+    const footerBtn = document.getElementById('footerSigninBtn');
+    if (footerBtn) {
+      footerBtn.disabled = pending;
+      if (pending) footerBtn.textContent = 'Signing in…';
+    }
+  }
+  window.addEventListener('pageshow', function (e) { if (e.persisted && authPending) { setAuthPending(false); updateNav(); } });
+
   function startLogin(redirectKind, extraState) {
+    setAuthPending(true);
     let csrfState = '';
     try {
       const buf = new Uint8Array(16);
@@ -265,7 +284,7 @@
       userBtn.classList.toggle('is-lite', loggedIn && !!((profileCache && profileCache.liteActive) || (!profileCache && cachedProfile && cachedProfile.liteActive)));
     }
     const footerBtn = document.getElementById('footerSigninBtn');
-    if (footerBtn) footerBtn.textContent = loggedIn ? 'Logout' : 'Sign in';
+    if (footerBtn) footerBtn.textContent = loggedIn ? 'Logout' : (authPending ? 'Signing in…' : 'Sign in');
   }
 
   window.FrostStore = {
@@ -479,6 +498,7 @@
     updateNav();
     profileListeners.push(updateNav);
     const oauthReturn = document.body.dataset.storeAuthPage === 'ty' ? null : consumeOauthReturn();
+    if (oauthReturn) setAuthPending(true);
     const authFlow = oauthReturn
       ? exchangeCode(oauthReturn.code, 'store').then(function (data) {
           if (!data || !data.ok) {
@@ -493,6 +513,7 @@
       : refreshProfile();
     authFlow.then(function () {
       authSettled = true;
+      setAuthPending(false);
       notifyProfile();
       updateNav();
     });

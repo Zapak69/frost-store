@@ -208,13 +208,14 @@
       return wrap;
     }
     if (owned) {
-      const btn = document.createElement('span');
-      btn.className = 'detail-cta cta-owned';
-      btn.textContent = 'Owned';
+      const btn = document.createElement('a');
+      btn.className = 'detail-cta cta-buy';
+      btn.href = 'frostclient://cape/' + encodeURIComponent(cape.id);
+      btn.textContent = 'Equip';
       wrap.appendChild(btn);
       const note = document.createElement('div');
       note.className = 'detail-cta-note';
-      note.textContent = 'Equip it in the launcher wardrobe.';
+      note.textContent = 'Opens the Frost Client Launcher and equips this cape for you.';
       wrap.appendChild(note);
       return wrap;
     }
@@ -279,6 +280,7 @@
   function renderInfo(profile) {
     if (!cape) return;
     const store = cape.store || {};
+    const owned = isOwned(profile);
     const price = priceLabel();
     info.innerHTML = '';
     const name = document.createElement('h1');
@@ -287,7 +289,12 @@
     info.appendChild(name);
     const priceRow = document.createElement('div');
     priceRow.className = 'detail-price-row';
-    if (price.pill) {
+    if (owned) {
+      const ownedText = document.createElement('span');
+      ownedText.className = 'detail-price detail-price-owned';
+      ownedText.textContent = 'OWNED';
+      priceRow.appendChild(ownedText);
+    } else if (price.pill) {
       const pill = document.createElement('span');
       pill.className = 'cape-price-pill ' + price.pill;
       pill.textContent = price.text.toUpperCase();
