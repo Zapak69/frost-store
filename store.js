@@ -25,7 +25,10 @@
       ctx.fillStyle = `rgba(168,230,248,${p.opacity})`;
       ctx.fill();
       p.y += p.speed; p.x += p.drift;
-      if (p.y > H + 10) { p.y = -10; p.x = Math.random() * W; }
+      if (p.y > H + 10) {
+          p.y = -10;
+          p.x = Math.random() * W;
+      }
       if (p.x > W + 10) p.x = -10;
       if (p.x < -10) p.x = W + 10;
     }
@@ -45,10 +48,16 @@
   const OAUTH_STATE_KEY = 'frostStoreOauthState';
 
   function loadToken() {
-    try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; }
+    try {
+        return localStorage.getItem(TOKEN_KEY) || '';
+    } catch (e) {
+        return '';
+    }
   }
   function saveToken(token) {
-    try { localStorage.setItem(TOKEN_KEY, token); } catch (e) {}
+    try {
+        localStorage.setItem(TOKEN_KEY, token);
+    } catch (e) {}
   }
   function clearAuth() {
     try {
@@ -60,25 +69,43 @@
     notifyProfile();
   }
   function loadCachedUser() {
-    try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch (e) { return null; }
+    try {
+        return JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+    } catch (e) {
+        return null;
+    }
   }
   function saveCachedUser(user) {
-    try { localStorage.setItem(USER_KEY, JSON.stringify(user)); } catch (e) {}
+    try {
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+    } catch (e) {}
   }
   function loadCachedProfile() {
-    try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null'); } catch (e) { return null; }
+    try {
+        return JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null');
+    } catch (e) {
+        return null;
+    }
   }
   function saveCachedProfile(profile) {
-    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (e) {}
+    try {
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    } catch (e) {}
   }
 
   function fetchJsonWithRetry(url, options, retries) {
     return fetch(url, options)
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+          return r.json();
+      })
       .catch(function (err) {
         if (retries > 0) {
-          return new Promise(function (resolve) { setTimeout(resolve, 1200); })
-            .then(function () { return fetchJsonWithRetry(url, options, retries - 1); });
+          return new Promise(function (resolve) {
+              setTimeout(resolve, 1200);
+          })
+            .then(function () {
+                return fetchJsonWithRetry(url, options, retries - 1);
+            });
         }
         throw err;
       });
@@ -100,7 +127,12 @@
       if (pending) footerBtn.textContent = 'Signing in…';
     }
   }
-  window.addEventListener('pageshow', function (e) { if (e.persisted && authPending) { setAuthPending(false); updateNav(); } });
+  window.addEventListener('pageshow', function (e) {
+      if (e.persisted && authPending) {
+          setAuthPending(false);
+          updateNav();
+      }
+  });
 
   function startLogin(redirectKind, extraState) {
     setAuthPending(true);
@@ -108,7 +140,9 @@
     try {
       const buf = new Uint8Array(16);
       crypto.getRandomValues(buf);
-      csrfState = Array.from(buf).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+      csrfState = Array.from(buf).map(function (b) {
+          return b.toString(16).padStart(2, '0');
+      }).join('');
       sessionStorage.setItem(OAUTH_STATE_KEY, csrfState);
     } catch (e) {}
     const redirectUri = redirectKind === 'ty' ? 'https://store.frostclient.eu/thank-you' : REDIRECT_URI_STORE;
@@ -127,10 +161,16 @@
     const code = params.get('code');
     const returnedState = params.get('state') || '';
     let storedState = '';
-    try { storedState = sessionStorage.getItem(OAUTH_STATE_KEY) || ''; } catch (e) {}
-    try { sessionStorage.removeItem(OAUTH_STATE_KEY); } catch (e) {}
+    try {
+        storedState = sessionStorage.getItem(OAUTH_STATE_KEY) || '';
+    } catch (e) {}
+    try {
+        sessionStorage.removeItem(OAUTH_STATE_KEY);
+    } catch (e) {}
     const cleanUrl = new URL(window.location.href);
-    ['code', 'state', 'error', 'error_description'].forEach(function (k) { cleanUrl.searchParams.delete(k); });
+    ['code', 'state', 'error', 'error_description'].forEach(function (k) {
+        cleanUrl.searchParams.delete(k);
+    });
     window.history.replaceState(null, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
     if (!code) return null;
     if (storedState && !returnedState.startsWith(storedState)) return null;
@@ -142,7 +182,9 @@
   let profileListeners = [];
   function notifyProfile() {
     profileListeners.forEach(function (fn) {
-      try { fn(profileCache); } catch (e) {}
+      try {
+          fn(profileCache);
+      } catch (e) {}
     });
   }
 
@@ -182,7 +224,9 @@
         if (data && data.error === 'token_expired') clearAuth();
         return null;
       })
-      .catch(function () { return null; });
+      .catch(function () {
+          return null;
+      });
   }
 
   let toastEl = null;
@@ -196,7 +240,9 @@
     toastEl.textContent = message;
     toastEl.classList.add('visible');
     if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toastEl.classList.remove('visible'); }, 7000);
+    toastTimer = setTimeout(function () {
+        toastEl.classList.remove('visible');
+    }, 7000);
   }
 
   function avatarUrl(user) {
@@ -204,7 +250,9 @@
       return 'https://cdn.discordapp.com/avatars/' + user.id + '/' + user.avatar + '.png?size=64';
     }
     let idx = 0;
-    try { idx = Number((BigInt((user && user.id) || '0') >> 22n) % 6n); } catch (e) {}
+    try {
+        idx = Number((BigInt((user && user.id) || '0') >> 22n) % 6n);
+    } catch (e) {}
     return 'https://cdn.discordapp.com/embed/avatars/' + idx + '.png';
   }
 
@@ -244,7 +292,10 @@
     if (!navMenu) return;
     navMenu.classList.remove('open');
     const btn = document.getElementById('navUserBtn');
-    if (btn) { btn.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); }
+    if (btn) {
+        btn.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+    }
   }
   function toggleNavMenu() {
     const btn = document.getElementById('navUserBtn');
@@ -252,7 +303,10 @@
     const open = !menu.classList.contains('open');
     if (open) positionNavMenu();
     menu.classList.toggle('open', open);
-    if (btn) { btn.classList.toggle('open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+    if (btn) {
+        btn.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
   }
   document.addEventListener('click', function (e) {
     if (!navMenu || !navMenu.classList.contains('open')) return;
@@ -260,8 +314,12 @@
     if ((btn && btn.contains(e.target)) || navMenu.contains(e.target)) return;
     closeNavMenu();
   });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeNavMenu(); });
-  window.addEventListener('resize', function () { if (navMenu && navMenu.classList.contains('open')) positionNavMenu(); });
+  document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeNavMenu();
+  });
+  window.addEventListener('resize', function () {
+      if (navMenu && navMenu.classList.contains('open')) positionNavMenu();
+  });
 
   function updateNav() {
     const signinBtn = document.getElementById('navSigninBtn');
@@ -297,8 +355,12 @@
     consumeOauthReturn: consumeOauthReturn,
     exchangeCode: exchangeCode,
     refreshProfile: refreshProfile,
-    getProfile: function () { return profileCache; },
-    isAuthSettled: function () { return authSettled; },
+    getProfile: function () {
+        return profileCache;
+    },
+    isAuthSettled: function () {
+        return authSettled;
+    },
     onProfile: function (fn) {
       profileListeners.push(fn);
       fn(profileCache);
@@ -379,7 +441,9 @@
         if (!r.ok) throw new Error('http_' + r.status);
         return r.blob();
       })
-      .then(function (blob) { return URL.createObjectURL(blob); });
+      .then(function (blob) {
+          return URL.createObjectURL(blob);
+      });
   }
 
   function renderCapePreview(cape) {
@@ -401,7 +465,9 @@
     });
     previewQueue = job;
     previewCache[key] = job;
-    job.catch(function () { delete previewCache[key]; });
+    job.catch(function () {
+        delete previewCache[key];
+    });
     return job;
   }
 
@@ -417,7 +483,9 @@
       img.className = 'cape-card-preview-img is-3d';
       img.alt = '';
       img.src = dataUrl;
-      img.addEventListener('load', function () { img.classList.add('ready'); });
+      img.addEventListener('load', function () {
+          img.classList.add('ready');
+      });
       previewWrap.replaceChild(img, flat);
     }).catch(function () {
       if (cape.store && cape.store.preview) {
@@ -470,7 +538,9 @@
 
   function bindAuthButtons() {
     const signinBtn = document.getElementById('navSigninBtn');
-    if (signinBtn) signinBtn.addEventListener('click', function () { startLogin('store'); });
+    if (signinBtn) signinBtn.addEventListener('click', function () {
+        startLogin('store');
+    });
     const footerBtn = document.getElementById('footerSigninBtn');
     if (footerBtn) footerBtn.addEventListener('click', function () {
       if (loadToken()) clearAuth();
@@ -479,7 +549,9 @@
     const userBtn = document.getElementById('navUserBtn');
     if (userBtn) userBtn.addEventListener('click', toggleNavMenu);
     const avatar = document.getElementById('navUserAvatar');
-    if (avatar) avatar.addEventListener('error', function () { avatar.style.display = 'none'; });
+    if (avatar) avatar.addEventListener('error', function () {
+        avatar.style.display = 'none';
+    });
   }
 
   function init() {
@@ -543,10 +615,17 @@
       return true;
     });
     if (sortMode === 'price-asc') {
-      visible.sort(function (a, b) { return Store.priceValue(a) - Store.priceValue(b); });
+      visible.sort(function (a, b) {
+          return Store.priceValue(a) - Store.priceValue(b);
+      });
     } else if (sortMode === 'price-desc') {
-      const pv = function (c) { const v = Store.priceValue(c); return v === Infinity ? -Infinity : v; };
-      visible.sort(function (a, b) { return pv(b) - pv(a); });
+      const pv = function (c) {
+          const v = Store.priceValue(c);
+          return v === Infinity ? -Infinity : v;
+      };
+      visible.sort(function (a, b) {
+          return pv(b) - pv(a);
+      });
     }
     grid.innerHTML = '';
     if (visible.length === 0) {
@@ -583,8 +662,12 @@
     const profile = Store.getProfile();
     const hasToken = !!Store.loadToken();
     if (hasToken && !Store.isAuthSettled()) return;
-    const annual = catalog.find(function (c) { return c.id === 'lite_year'; });
-    const lite = catalog.find(function (c) { return c.id === 'lite'; });
+    const annual = catalog.find(function (c) {
+        return c.id === 'lite_year';
+    });
+    const lite = catalog.find(function (c) {
+        return c.id === 'lite';
+    });
     const showAnnual = annual && !Store.isOwned(annual, profile);
     const showLite = lite && !Store.isOwned(lite, profile);
     if (!showAnnual && !showLite) {
@@ -597,7 +680,10 @@
     teaser.hidden = false;
   }
 
-  Store.onProfile(function () { render(); renderTeaser(); });
+  Store.onProfile(function () {
+      render();
+      renderTeaser();
+  });
 
   Store.fetchJsonWithRetry(Store.capesJsonUrl, { cache: 'no-store' }, 2)
     .then(function (data) {

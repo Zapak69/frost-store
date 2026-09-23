@@ -17,7 +17,11 @@
   }
 
   function storedPaymentId() {
-    try { return sessionStorage.getItem(PAYMENT_ID_KEY) || ''; } catch (e) { return ''; }
+    try {
+        return sessionStorage.getItem(PAYMENT_ID_KEY) || '';
+    } catch (e) {
+        return '';
+    }
   }
   function claim(paymentId) {
     const token = Store.loadToken();
@@ -46,7 +50,9 @@
           showError(messages[data && data.error] || 'Something went wrong verifying your purchase.', data && data.detail);
           return;
         }
-        try { sessionStorage.removeItem(PAYMENT_ID_KEY); } catch (e) {}
+        try {
+            sessionStorage.removeItem(PAYMENT_ID_KEY);
+        } catch (e) {}
         Store.refreshProfile();
         if (data.capeName) {
           document.getElementById('successTitle').textContent = data.capeName + ' unlocked!';
@@ -63,7 +69,9 @@
         }
         show('stateSuccess');
       })
-      .catch(function () { showError('Network error while contacting the server. Please try again.'); });
+      .catch(function () {
+          showError('Network error while contacting the server. Please try again.');
+      });
   }
 
   document.getElementById('claimLoginBtn').addEventListener('click', function () {
@@ -89,7 +97,9 @@
 
     const incomingPaymentId = params.get('payment_id') || params.get('receipt_id') || '';
     if (incomingPaymentId) {
-      try { sessionStorage.setItem(PAYMENT_ID_KEY, incomingPaymentId); } catch (e) {}
+      try {
+          sessionStorage.setItem(PAYMENT_ID_KEY, incomingPaymentId);
+      } catch (e) {}
       const cleanUrl = new URL(window.location.href);
       ['receipt_id', 'payment_id', 'checkout_status', 'status', 'state_id', 'cape'].forEach(function (k) {
         cleanUrl.searchParams.delete(k);
@@ -118,7 +128,9 @@
           }
           claim(paymentId);
         })
-        .catch(function () { showError('Network error during sign-in. Please try again.'); });
+        .catch(function () {
+            showError('Network error during sign-in. Please try again.');
+        });
       return;
     }
 

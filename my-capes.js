@@ -16,7 +16,9 @@
     btn.className = 'detail-cta cta-buy';
     btn.style.marginTop = '18px';
     btn.textContent = 'Sign in with Discord';
-    btn.addEventListener('click', function () { Store.startLogin('store'); });
+    btn.addEventListener('click', function () {
+        Store.startLogin('store');
+    });
     wrap.appendChild(btn);
     grid.appendChild(wrap);
   }
@@ -54,7 +56,9 @@
     });
   }
 
-  Store.onProfile(function () { render(); });
+  Store.onProfile(function () {
+      render();
+  });
 
   Store.fetchJsonWithRetry(Store.capesJsonUrl, { cache: 'no-store' }, 2)
     .then(function (data) {

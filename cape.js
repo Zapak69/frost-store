@@ -12,7 +12,11 @@
   let mySkinCheckedFor = null;
 
   function loadSavedSkin() {
-    try { return JSON.parse(localStorage.getItem(SKIN_KEY) || 'null'); } catch (e) { return null; }
+    try {
+        return JSON.parse(localStorage.getItem(SKIN_KEY) || 'null');
+    } catch (e) {
+        return null;
+    }
   }
   function saveSkin(skin) {
     try {
@@ -22,7 +26,9 @@
     updateSkinMenuState();
   }
   function loadDefaultSkin(v) {
-    return fetchObjectUrl('skin.png').then(function (url) { return v.loadSkin(url); });
+    return fetchObjectUrl('skin.png').then(function (url) {
+        return v.loadSkin(url);
+    });
   }
   function applySkin(v, skin) {
     if (!skin || !skin.skinUrl) return loadDefaultSkin(v);
@@ -72,7 +78,9 @@
     if (mySkinCheckedFor === token) return;
     mySkinCheckedFor = token;
     fetch(BOT_BASE + '/launcher/my-skin?token=' + encodeURIComponent(token), { cache: 'no-store' })
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+          return r.json();
+      })
       .then(function (data) {
         if (mySkinCheckedFor !== token) return;
         mySkinInfo = data && data.ok && data.linked && data.skinUrl ? data : null;
@@ -89,7 +97,9 @@
   function openSkinModal() {
     showSkinError('');
     skinModal.hidden = false;
-    setTimeout(function () { skinNameInput.focus(); }, 30);
+    setTimeout(function () {
+        skinNameInput.focus();
+    }, 30);
   }
   function closeSkinModal() {
     skinModal.hidden = true;
@@ -118,15 +128,21 @@
     setSkinMenuOpen(false);
     if (!viewer || !mySkinInfo) return;
     const skin = { source: 'mine', name: mySkinInfo.username || '', skinUrl: mySkinInfo.skinUrl, model: mySkinInfo.model || 'auto-detect' };
-    applySkin(viewer, skin).then(function () { saveSkin(skin); }).catch(function () {});
+    applySkin(viewer, skin).then(function () {
+        saveSkin(skin);
+    }).catch(function () {});
   });
   skinMenuDefault.addEventListener('click', function () {
     setSkinMenuOpen(false);
     if (!viewer) return;
-    loadDefaultSkin(viewer).then(function () { saveSkin(null); }).catch(function () {});
+    loadDefaultSkin(viewer).then(function () {
+        saveSkin(null);
+    }).catch(function () {});
   });
   document.getElementById('skinModalClose').addEventListener('click', closeSkinModal);
-  skinModal.addEventListener('click', function (e) { if (e.target === skinModal) closeSkinModal(); });
+  skinModal.addEventListener('click', function (e) {
+      if (e.target === skinModal) closeSkinModal();
+  });
   skinModalForm.addEventListener('submit', function (e) {
     e.preventDefault();
     const name = skinNameInput.value.trim();
@@ -138,7 +154,9 @@
     showSkinError('');
     skinModalSubmit.classList.add('is-loading');
     fetch(BOT_BASE + '/launcher/skin-lookup?name=' + encodeURIComponent(name), { cache: 'no-store' })
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+          return r.json();
+      })
       .then(function (data) {
         if (!data || !data.ok || !data.skinUrl) {
           skinModalSubmit.classList.remove('is-loading');
@@ -160,7 +178,9 @@
         showSkinError('Network error while looking up the player. Please try again.');
       });
   });
-  Store.onProfile(function () { refreshMySkinItem(); });
+  Store.onProfile(function () {
+      refreshMySkinItem();
+  });
   updateSkinMenuState();
   let cape = null;
   let viewerStarted = false;
@@ -257,7 +277,9 @@
       } else {
         btn.type = 'button';
         btn.textContent = 'Sign in to purchase';
-        btn.addEventListener('click', function () { Store.startLogin('store'); });
+        btn.addEventListener('click', function () {
+            Store.startLogin('store');
+        });
       }
       wrap.appendChild(btn);
       const note = document.createElement('div');
@@ -382,7 +404,9 @@
           });
         });
       })
-      .catch(function () { return []; });
+      .catch(function () {
+          return [];
+      });
   }
 
   let animFrames = null;
@@ -462,7 +486,9 @@
         if (!r.ok) throw new Error('http_' + r.status);
         return r.blob();
       })
-      .then(function (blob) { return URL.createObjectURL(blob); });
+      .then(function (blob) {
+          return URL.createObjectURL(blob);
+      });
   }
 
   function startViewer() {
@@ -482,7 +508,9 @@
     viewer.autoRotate = true;
     viewer.autoRotateSpeed = 0.5;
     viewer.playerObject.rotation.y = Math.PI;
-    viewer.controls.addEventListener('start', function () { viewer.autoRotate = false; });
+    viewer.controls.addEventListener('start', function () {
+        viewer.autoRotate = false;
+    });
     Promise.all([
       loadInitialSkin(viewer),
       fetchObjectUrl(Store.capesBase + encodeURIComponent(cape.file)).then(function (url) {
@@ -518,15 +546,21 @@
   Store.fetchJsonWithRetry(Store.capesJsonUrl, { cache: 'no-store' }, 2)
     .then(function (data) {
       const catalog = Array.isArray(data) ? data : [];
-      cape = catalog.find(function (c) { return c.id === capeId && c.store; }) || null;
+      cape = catalog.find(function (c) {
+          return c.id === capeId && c.store;
+      }) || null;
       if (!cape) {
         showNotFound();
         return;
       }
       document.title = (cape.name || cape.id) + ' | Frost Store';
       renderInfo(Store.getProfile());
-      Store.onProfile(function (profile) { renderInfo(profile); });
+      Store.onProfile(function (profile) {
+          renderInfo(profile);
+      });
       startViewer();
     })
-    .catch(function () { showNotFound(); });
+    .catch(function () {
+        showNotFound();
+    });
 })();
