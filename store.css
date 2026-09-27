@@ -1111,3 +1111,42 @@ footer {
 .detail-cta-note.gift-cta-error {
   color: #ff6b6b;
 }
+.detail-cta.gift-cta-loading:disabled {
+  cursor: progress;
+}
+.gift-cta-spinner {
+  width: 17px;
+  height: 17px;
+  border: 2.5px solid rgba(6,18,28,0.25);
+  border-top-color: #06121c;
+  border-radius: 50%;
+  animation: claimspin 0.7s linear infinite;
+}
+.detail-cta.gift-cta-claimed {
+  background: #30d158;
+  color: #04210d;
+  box-shadow: 0 0 26px rgba(48,209,88,0.45), 0 4px 18px rgba(48,209,88,0.25);
+  animation: gift-claimed-pop 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+.detail-cta.gift-cta-claimed svg {
+  width: 18px;
+  height: 18px;
+}
+@keyframes gift-claimed-pop {
+  0% {
+    transform: scale(0.96);
+    filter: brightness(1.25);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gift-cta-spinner {
+    animation-duration: 1.6s;
+  }
+  .detail-cta.gift-cta-claimed {
+    animation: none;
+  }
+}

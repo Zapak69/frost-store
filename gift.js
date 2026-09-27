@@ -11,6 +11,9 @@
   let claiming = false;
   let claimError = '';
   let justClaimed = false;
+  let claimedFlash = false;
+  const CLAIMED_FLASH_MS = 2500;
+  const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
   let viewer = null;
   let viewerStarted = false;
   let staticCapeUrl = null;
@@ -75,6 +78,16 @@
       wrap.appendChild(disabledButton('· · ·'));
       return wrap;
     }
+    if (claimedFlash) {
+      const done = document.createElement('button');
+      done.type = 'button';
+      done.className = 'detail-cta gift-cta-claimed';
+      done.disabled = true;
+      done.innerHTML = CHECK_ICON + '<span>Claimed</span>';
+      wrap.appendChild(done);
+      wrap.appendChild(note('Gift claimed. The cape is now in your account and in the Frost Client Launcher.'));
+      return wrap;
+    }
     if (loggedIn && ownsCape(profile)) {
       const btn = document.createElement('a');
       btn.className = 'detail-cta cta-buy';
@@ -110,7 +123,13 @@
       wrap.appendChild(note('Sign in with Discord so the cape can be added to your account.'));
       return wrap;
     }
-    btn.textContent = claiming ? 'Claiming…' : 'Claim Gift';
+    if (claiming) {
+      btn.classList.add('gift-cta-loading');
+      btn.setAttribute('aria-busy', 'true');
+      btn.innerHTML = '<span class="gift-cta-spinner" aria-hidden="true"></span><span>Claiming…</span>';
+    } else {
+      btn.textContent = 'Claim Gift';
+    }
     btn.disabled = claiming;
     btn.addEventListener('click', claim);
     wrap.appendChild(btn);
@@ -196,6 +215,11 @@
         if (data && data.cape) applyGift(data);
         if (data && data.ok) {
           justClaimed = true;
+          claimedFlash = true;
+          setTimeout(function () {
+            claimedFlash = false;
+            renderInfo(Store.getProfile());
+          }, CLAIMED_FLASH_MS);
           Store.refreshProfile();
         } else {
           claimError = ERROR_TEXT[data && data.error] || 'Something went wrong. Try again in a moment.';
