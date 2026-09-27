@@ -583,7 +583,12 @@
           return null;
         })
       : refreshProfile();
+    const giftReturn = oauthReturn ? /\.g\.([a-z0-9]{4,32})$/.exec(oauthReturn.state || '') : null;
     authFlow.then(function () {
+      if (giftReturn) {
+        window.location.replace('/gift?c=' + encodeURIComponent(giftReturn[1]));
+        return;
+      }
       authSettled = true;
       setAuthPending(false);
       notifyProfile();
