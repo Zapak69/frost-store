@@ -371,7 +371,9 @@
     pricePill: pricePill,
     isOwned: isOwned,
     salePrice: salePrice,
-    buildCapeCard: buildCapeCard
+    buildCapeCard: buildCapeCard,
+    limitedInfo: limitedInfo,
+    releaseTime: releaseTime
   };
 
   function priceValue(cape) {
@@ -394,6 +396,20 @@
       return { text: '€' + store.price.toFixed(2), cls: store.checkout ? (sale ? 'pill-sale' : '') : 'pill-soon', original: sale && store.checkout ? '€' + sale.original.toFixed(2) : null, percent: sale ? sale.percent : 0 };
     }
     return { text: 'COMING SOON', cls: 'pill-soon' };
+  }
+
+  function limitedInfo(cape) {
+    const store = (cape && cape.store) || {};
+    if (!store.limitedUntil) return null;
+    const until = new Date(store.limitedUntil).getTime();
+    if (!isFinite(until)) return null;
+    return { until: until, active: until > Date.now(), free: store.price === 0 || store.price === 'free' };
+  }
+
+  function releaseTime(cape) {
+    const store = (cape && cape.store) || {};
+    const t = store.releaseDate ? new Date(store.releaseDate).getTime() : NaN;
+    return isFinite(t) ? t : null;
   }
 
   function isOwned(cape, profile) {
@@ -527,6 +543,13 @@
       pillEl.textContent = pill.text;
     }
     card.appendChild(pillEl);
+    const limited = limitedInfo(cape);
+    if (limited && limited.active && !owned) {
+      const lim = document.createElement('span');
+      lim.className = 'cape-limited-badge';
+      lim.textContent = 'LIMITED';
+      card.appendChild(lim);
+    }
     if (cape.animated) {
       const anim = document.createElement('span');
       anim.className = 'cape-animated-badge';
@@ -584,9 +607,14 @@
         })
       : refreshProfile();
     const giftReturn = oauthReturn ? /\.g\.([a-z0-9]{4,32})$/.exec(oauthReturn.state || '') : null;
+    const capeReturn = oauthReturn ? /\.c\.([a-z0-9_-]{1,64})$/.exec(oauthReturn.state || '') : null;
     authFlow.then(function () {
       if (giftReturn) {
         window.location.replace('/gift?c=' + encodeURIComponent(giftReturn[1]));
+        return;
+      }
+      if (capeReturn) {
+        window.location.replace('/cape?id=' + encodeURIComponent(capeReturn[1]));
         return;
       }
       authSettled = true;
@@ -609,17 +637,33 @@
   const Store = window.FrostStore;
   let catalog = null;
   let searchQuery = '';
-  let sortMode = 'default';
+  let sortMode = 'newest';
 
   function render() {
     if (!catalog) return;
     const profile = Store.getProfile();
+    const order = {};
+    catalog.forEach(function (cape, i) {
+        order[cape.id] = i;
+    });
     const visible = catalog.filter(function (cape) {
       if (!cape.store || cape.store.subscription) return false;
+      const limited = Store.limitedInfo(cape);
+      if (limited && !limited.active) return false;
       if (searchQuery && String(cape.name || cape.id).toLowerCase().indexOf(searchQuery) === -1) return false;
       return true;
     });
-    if (sortMode === 'price-asc') {
+    if (sortMode === 'newest' || sortMode === 'oldest') {
+      const dir = sortMode === 'newest' ? -1 : 1;
+      visible.sort(function (a, b) {
+        const ta = Store.releaseTime(a);
+        const tb = Store.releaseTime(b);
+        if (ta === null && tb !== null) return 1;
+        if (tb === null && ta !== null) return -1;
+        if (ta !== tb) return dir * (ta - tb);
+        return dir * (order[a.id] - order[b.id]);
+      });
+    } else if (sortMode === 'price-asc') {
       visible.sort(function (a, b) {
           return Store.priceValue(a) - Store.priceValue(b);
       });

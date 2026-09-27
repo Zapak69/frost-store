@@ -10,6 +10,18 @@
   let viewer = null;
   let mySkinInfo = null;
   let mySkinCheckedFor = null;
+  let limitedClaiming = false;
+  let limitedClaimError = '';
+  let limitedClaimedFlash = false;
+  let limitedJustClaimed = false;
+  const LIMITED_ERROR_TEXT = {
+    not_signed_in: 'Your session expired. Sign in again to claim this cape.',
+    expired: 'This limited cape is no longer available.',
+    rate_limited: 'Too many attempts. Wait a minute and try again.',
+    grant_failed: 'The cape could not be added to your account right now. Try again in a moment.',
+    not_found: 'This cape is not available to claim.'
+  };
+  const CLAIM_CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 
   function loadSavedSkin() {
     try {
@@ -199,7 +211,109 @@
 
   function isOwned(profile) {
     if (!cape) return false;
+    if (limitedJustClaimed && profile && profile.user) return true;
     return !!(profile && profile.owned && profile.owned.indexOf(cape.id) !== -1);
+  }
+
+  function formatDateTime(ms) {
+    const d = new Date(ms);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function claimLimited() {
+    if (limitedClaiming) return;
+    const token = Store.loadToken();
+    if (!token) {
+      Store.startLogin('store', '.c.' + cape.id);
+      return;
+    }
+    limitedClaiming = true;
+    limitedClaimError = '';
+    renderInfo(Store.getProfile());
+    fetch(BOT_BASE + '/store/claim-limited', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ capeId: cape.id, token: token })
+    })
+      .then(function (r) {
+          return r.json();
+      })
+      .then(function (data) {
+        limitedClaiming = false;
+        if (data && data.ok) {
+          limitedJustClaimed = true;
+          limitedClaimedFlash = true;
+          setTimeout(function () {
+            limitedClaimedFlash = false;
+            renderInfo(Store.getProfile());
+          }, 2500);
+          Store.refreshProfile();
+        } else {
+          limitedClaimError = LIMITED_ERROR_TEXT[data && data.error] || 'Something went wrong. Try again in a moment.';
+          if (data && data.error === 'not_signed_in') Store.clearAuth();
+        }
+        renderInfo(Store.getProfile());
+      })
+      .catch(function () {
+        limitedClaiming = false;
+        limitedClaimError = 'Network error. Check your connection and try again.';
+        renderInfo(Store.getProfile());
+      });
+  }
+
+  function buildLimitedCta(wrap, profile, limited) {
+    const note = function (text, isError) {
+      const el = document.createElement('div');
+      el.className = 'detail-cta-note' + (isError ? ' gift-cta-error' : '');
+      el.textContent = text;
+      wrap.appendChild(el);
+    };
+    if (limitedClaimedFlash) {
+      const done = document.createElement('button');
+      done.type = 'button';
+      done.className = 'detail-cta gift-cta-claimed';
+      done.disabled = true;
+      done.innerHTML = CLAIM_CHECK_ICON + '<span>Claimed</span>';
+      wrap.appendChild(done);
+      note('Claimed. The cape is now in your account and in the Frost Client Launcher.');
+      return wrap;
+    }
+    if (!limited.active) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'detail-cta cta-disabled';
+      btn.disabled = true;
+      btn.textContent = 'No longer available';
+      wrap.appendChild(btn);
+      note('This limited cape could be claimed until ' + formatDateTime(limited.until) + '.');
+      return wrap;
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'detail-cta cta-buy';
+    if (!(profile && profile.user)) {
+      btn.textContent = 'Sign in to claim';
+      btn.addEventListener('click', function () {
+          Store.startLogin('store', '.c.' + cape.id);
+      });
+      wrap.appendChild(btn);
+      note('Sign in with Discord so the cape can be added to your account.');
+      return wrap;
+    }
+    if (limitedClaiming) {
+      btn.classList.add('gift-cta-loading');
+      btn.setAttribute('aria-busy', 'true');
+      btn.innerHTML = '<span class="gift-cta-spinner" aria-hidden="true"></span><span>Claiming…</span>';
+      btn.disabled = true;
+    } else {
+      btn.textContent = 'Claim';
+      btn.addEventListener('click', claimLimited);
+    }
+    wrap.appendChild(btn);
+    if (limitedClaimError) note(limitedClaimError, true);
+    else note('Free for a limited time. Claim it before ' + formatDateTime(limited.until) + '.');
+    return wrap;
   }
 
   function priceLabel() {
@@ -218,6 +332,8 @@
     const owned = isOwned(profile);
     const wrap = document.createElement('div');
     wrap.className = 'detail-cta-wrap';
+    const limited = Store.limitedInfo(cape);
+    if (limited && limited.free && limitedClaimedFlash) return buildLimitedCta(wrap, profile, limited);
     if (!profile && Store.loadToken() && !Store.isAuthSettled()) {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -239,6 +355,7 @@
       wrap.appendChild(note);
       return wrap;
     }
+    if (limited && limited.free) return buildLimitedCta(wrap, profile, limited);
     if (store.subscription) {
       const isAnnual = store.subscription === 'annual';
       const btn = document.createElement('a');
@@ -346,6 +463,8 @@
       ['Release date', formatDate(store.releaseDate)],
       ['Animated', cape.animated ? 'Yes' : 'No']
     ];
+    const limitedMeta = Store.limitedInfo(cape);
+    if (limitedMeta) rows.push([limitedMeta.active ? 'Available until' : 'Ended', formatDateTime(limitedMeta.until)]);
     rows.forEach(function (pair) {
       const row = document.createElement('div');
       row.className = 'detail-meta-row';

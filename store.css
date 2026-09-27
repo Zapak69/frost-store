@@ -1150,3 +1150,9 @@ footer {
     animation: none;
   }
 }
+.cape-limited-badge {
+  position: absolute; top: 12px; right: 12px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px;
+  color: #1a1400; background: var(--gold);
+  padding: 4px 10px; border-radius: 980px;
+}
