@@ -373,6 +373,7 @@
     salePrice: salePrice,
     buildCapeCard: buildCapeCard,
     limitedInfo: limitedInfo,
+    isPartnerCape: isPartnerCape,
     releaseTime: releaseTime
   };
 
@@ -404,6 +405,11 @@
     const until = new Date(store.limitedUntil).getTime();
     if (!isFinite(until)) return null;
     return { until: until, active: until > Date.now(), free: store.price === 0 || store.price === 'free' };
+  }
+
+  function isPartnerCape(cape) {
+    const v = cape && cape.partner;
+    return v === true || (typeof v === 'string' && v.trim() !== '') || (typeof v === 'number' && v > 0);
   }
 
   function releaseTime(cape) {
@@ -549,6 +555,12 @@
       lim.className = 'cape-limited-badge';
       lim.textContent = 'LIMITED';
       card.appendChild(lim);
+    }
+    if (isPartnerCape(cape)) {
+      const partner = document.createElement('span');
+      partner.className = 'cape-partner-badge';
+      partner.textContent = 'PARTNER';
+      card.appendChild(partner);
     }
     if (cape.animated) {
       const anim = document.createElement('span');

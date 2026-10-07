@@ -1156,3 +1156,18 @@ footer {
   color: #1a1400; background: var(--gold);
   padding: 4px 10px; border-radius: 980px;
 }
+
+.cape-partner-badge {
+  position: absolute; top: 12px; right: 12px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px;
+  color: #fff; background: var(--lite);
+  padding: 4px 10px; border-radius: 980px;
+}
+.cape-limited-badge ~ .cape-partner-badge {
+  top: 40px;
+}
+.cape-partner-pill {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
+  color: #fff; background: var(--lite);
+  padding: 5px 12px; border-radius: 980px;
+}

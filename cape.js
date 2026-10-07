@@ -456,6 +456,12 @@
         priceRow.appendChild(sale);
       }
     }
+    if (Store.isPartnerCape(cape)) {
+      const partner = document.createElement('span');
+      partner.className = 'cape-partner-pill';
+      partner.textContent = 'PARTNER';
+      priceRow.appendChild(partner);
+    }
     info.appendChild(priceRow);
     const meta = document.createElement('div');
     meta.className = 'detail-meta';
