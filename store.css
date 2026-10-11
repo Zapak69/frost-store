@@ -2909,3 +2909,6 @@ footer {
 .cart-pop-price.is-bundle {
   color: var(--green);
 }
+.cart-discount-note {
+  margin: 6px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--muted);
+}

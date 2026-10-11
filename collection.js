@@ -132,6 +132,10 @@
         });
       }
       box.appendChild(btn);
+      const codeNote = document.createElement('p');
+      codeNote.className = 'bundle-hint';
+      codeNote.textContent = 'Discount codes don\u2019t apply to collections.';
+      box.appendChild(codeNote);
       if (rate > 0 && !applies) {
         const hint = document.createElement('p');
         hint.className = 'bundle-hint';

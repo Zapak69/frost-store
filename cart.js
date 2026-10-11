@@ -330,10 +330,15 @@
       document.getElementById('cartLiteDiscLabel').textContent = 'Lite member discount (' + litePct + '%)';
       document.getElementById('cartLiteDisc').textContent = '−' + money(liteOff);
     }
-    document.getElementById('cartDiscountRow').hidden = !pct;
+    const ignored = !lite && capes.length && quote && quote.promoIgnored ? quote.promoIgnored : '';
+    document.getElementById('cartDiscountRow').hidden = !pct && !ignored;
+    document.getElementById('cartDiscountNote').hidden = !ignored;
     if (pct) {
       document.getElementById('cartDiscountLabel').textContent = quote.promoCode + ' – ' + pct + '%';
       document.getElementById('cartDiscount').textContent = '−' + money(promoOff);
+    } else if (ignored) {
+      document.getElementById('cartDiscountLabel').textContent = ignored + ' – 0%';
+      document.getElementById('cartDiscount').textContent = '−' + money(0);
     }
     const minApplied = !!(capes.length && quote && quote.minimumApplied);
     document.getElementById('cartMinRow').hidden = !minApplied;
@@ -356,6 +361,7 @@
     else if (lite) checkoutNote.textContent = trial
       ? 'Nothing is charged today. Your free trial ends tomorrow, then Lite renews at ' + money(lite.price) + ' / month until you cancel.'
       : 'Checkout is handled securely by Whop. Lite unlocks in the Frost Launcher right after you subscribe.';
+    else if (quote && quote.promoIgnored) checkoutNote.textContent = 'Collections are paid at the price shown here. Don\u2019t enter a discount code on the Whop page, or the order can\u2019t be completed.';
     else if (quote && quote.promoCode) checkoutNote.textContent = 'Code ' + quote.promoCode + ' is applied on the Whop checkout page. Your capes unlock right after payment.';
     else checkoutNote.textContent = 'Checkout is handled securely by Whop. Your capes unlock right after payment.';
   }
@@ -391,7 +397,7 @@
       if (promo && !data.promoValid) {
         setSavedPromo('');
         showPromoMsg("That discount code isn't valid.", false);
-      } else if (data.promoCode) {
+      } else if (data.promoCode || data.promoIgnored) {
         showPromoMsg('', false);
         promoInput.value = '';
       }
