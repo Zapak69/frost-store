@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FrostClient Lite | Frost Store</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex, follow">
+<meta name="keywords" content="FrostClient Store, Frost Store, Frost Client Store"> 
+<meta name="description" content="FrostClient Lite: the fastest build of Frost with exclusive capes and priority support">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="store.css">
+</head>
+<body data-page="lite">
+
+<div class="topo-bg">
+  <svg viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs><style>.tline{fill:none;stroke:#4fc8f8;stroke-width:1.2;}</style></defs>
+    <path class="tline" d="M-100,200 C100,180 250,240 400,200 S650,140 800,200 S1050,280 1200,220 S1400,160 1500,200"/>
+    <path class="tline" d="M-100,340 C60,320 180,380 360,340 S580,255 740,330 S980,400 1160,345 S1360,290 1500,335"/>
+    <path class="tline" d="M-100,500 C20,480 140,540 320,500 S540,405 700,490 S940,545 1120,490 S1320,440 1500,490"/>
+    <path class="tline" d="M-100,660 C-20,640 100,700 280,660 S500,560 660,645 S900,705 1080,650 S1280,598 1500,648"/>
+    <path class="tline" d="M200,100 C300,80 380,150 450,100 S600,40 700,110 S820,180 940,120 S1100,60 1200,100"/>
+    <path class="tline" d="M250,820 C350,800 430,870 500,820 S650,755 750,825 S870,895 990,835 S1150,775 1250,820"/>
+  </svg>
+</div>
+<canvas id="particles"></canvas>
+
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="/"><img src="favicon.ico" alt="" class="nav-logo-icon"/><span>FROST</span> <span class="nav-logo-store">STORE</span></a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/lite" class="active">Lite</a></li>
+      <li><a href="/capes">Capes</a></li>
+      <li><a href="/collections">Collections</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button type="button" class="nav-signin-btn" id="navSigninBtn"><span>Sign in</span></button>
+      <button type="button" class="nav-signin-btn frost-nav-pill" id="navUserBtn" hidden aria-haspopup="true"><img class="frost-nav-avatar" id="navUserAvatar" src="" alt=""/><span class="frost-nav-name" id="navUserName"></span><svg class="frost-nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+    </div>
+  </div>
+</nav>
+
+<main class="store-page">
+  <header class="store-head home-head">
+    <div class="store-eyebrow store-eyebrow--lite">Exclusive access</div>
+    <h1 class="store-title">FrostClient <span class="lite-grad">Lite</span></h1>
+    <p class="store-sub">The fastest build of Frost, with <strong>200–400 extra FPS</strong> over the regular client depending on your machine, plus exclusive perks on top.</p>
+  </header>
+  <div class="lite-status js-lite-status" hidden>
+    <span class="lite-status-dot"></span><span class="js-lite-status-text">Your Lite subscription is active. Sign in to the Frost Launcher with this Discord account to use it.</span>
+  </div>
+  <div class="lite-plans" id="plans">
+    <article class="lite-plan lite-plan--monthly js-lite-plan" data-plan="monthly">
+      <div class="lite-plan-top">
+        <span class="lite-plan-name">Monthly</span>
+        <span class="lite-plan-current js-lite-current" hidden>Your plan</span>
+      </div>
+      <div class="lite-plan-price"><span class="lite-plan-amount">€2.90</span><span class="lite-plan-period">/ month</span></div>
+      <div class="lite-plan-note">Start with a 1-day free trial. Cancel anytime.</div>
+      <ul class="lite-plan-perks">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>FrostClient Lite build, up to +400 FPS over regular Frost</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Exclusive Lite cape</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Priority tickets and extended support</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>5 share links, valid for 7 days</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>5% off</strong> everything in the store</span></li>
+      </ul>
+      <a class="lite-plan-cta js-lite-cta" href="https://whop.com/checkout/plan_oKGeLuyTvJb5u">Start free trial</a>
+    </article>
+    <article class="lite-plan lite-plan--annual js-lite-plan" data-plan="annual">
+      <div class="lite-plan-top">
+        <span class="lite-plan-name">Annual</span>
+        <span class="lite-plan-save">2 months free</span>
+        <span class="lite-plan-current js-lite-current" hidden>Your plan</span>
+      </div>
+      <div class="lite-plan-price"><span class="lite-plan-amount">€29.90</span><span class="lite-plan-period">/ year</span></div>
+      <div class="lite-plan-note">€2.49 / month, billed yearly. <s>€34.80</s></div>
+      <ul class="lite-plan-perks">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Everything in Monthly</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Lite Year</strong> cape, only for annual plans</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Save €4.90 compared to paying monthly</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>10% off</strong> everything in the store</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>One payment, no monthly renewals</span></li>
+      </ul>
+      <a class="lite-plan-cta js-lite-cta" href="https://whop.com/checkout/plan_YDenpzviXSDXW">Get annual</a>
+    </article>
+  </div>
+  <p class="lite-plan-fine">Payments are handled securely by Whop. By subscribing you agree to our <a href="https://frostclient.eu/terms">Terms of Service</a>. The base FrostClient stays free.</p>
+  <section class="lite-section">
+    <div class="store-eyebrow">Benefits</div>
+    <h2 class="home-section-title">What you get with Lite</h2>
+    <div class="lite-benefits">
+      <div class="lite-benefit">
+        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg></div>
+        <h3>Maximum performance</h3>
+        <p>Optimization tuned all the way up, roughly <strong>+700 FPS</strong> over vanilla and more than double the regular client.</p>
+      </div>
+      <div class="lite-benefit">
+        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M21 16a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2h3v3Z"/><path d="M3 16a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2H3v3Z"/></svg></div>
+        <h3>Priority support</h3>
+        <p>Skip the queue with <strong>priority tickets</strong>, ping staff on Discord and get extended support hours.</p>
+      </div>
+      <div class="lite-benefit">
+        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg></div>
+        <h3>Exclusive capes</h3>
+        <p>A cape only Lite subscribers get, and an even rarer <strong>Lite Year</strong> cape for annual plans.</p>
+      </div>
+      <div class="lite-benefit">
+        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 5a3 3 0 1 1 0 .01"/><path d="M6 12a3 3 0 1 1 0 .01"/><path d="M18 19a3 3 0 1 1 0 .01"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/></svg></div>
+        <h3>More instance sharing</h3>
+        <p>Share up to <strong>5 active links</strong> at once, each valid for <strong>7 days</strong> instead of 24 hours.</p>
+      </div>
+      <div class="lite-benefit">
+        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01Z"/></svg></div>
+        <h3>Discord recognition</h3>
+        <p>A <strong>special role</strong> on our server and a badge right before your name in game.</p>
+      </div>
+      <div class="lite-benefit">
+        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg></div>
+        <h3>Store discount</h3>
+        <p><strong>5% off</strong> every cape in the store with Monthly, <strong>10% off</strong> with Annual. Applied automatically at checkout.</p>
+      </div>
+    </div>
+  </section>
+  <section class="lite-section" id="liteReviews" hidden>
+    <div class="store-eyebrow">Reviews</div>
+    <h2 class="home-section-title">What subscribers say</h2>
+    <div class="lite-reviews" id="liteReviewsGrid"></div>
+    <a class="section-more" href="https://frostclient.eu/reviews">View more reviews →</a>
+  </section>
+  <section class="lite-section lite-account">
+    <h2 class="home-section-title">Already subscribed?</h2>
+    <p class="store-sub" id="liteAccountText">Sign in with Discord to check your subscription. Lite activates in the Frost Launcher, signed in with the same Discord account.</p>
+    <div class="lite-account-actions">
+      <button type="button" class="detail-cta cta-secondary" id="liteSigninBtn">Sign in with Discord</button>
+      <a class="detail-cta cta-secondary" href="https://frostclient.eu/?openDownload">Download the launcher</a>
+      <a class="detail-cta cta-secondary" href="https://frostclient.eu/lite/cancel">Cancel subscription</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo">❄ FROST <span class="footer-logo-store">STORE</span></div>
+      <p class="footer-tagline">Capes and cosmetics for the<br/>fastest free Minecraft client.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Store</h4>
+      <a href="/capes">Cape Catalog</a>
+      <a href="/lite">Frost Lite</a>
+      <a href="https://frostclient.eu">Main Website</a>
+      <a href="https://frostclient.eu/?openDownload">Download Frost</a>
+    </div>
+    <div class="footer-col">
+      <h4>Account</h4>
+      <button type="button" class="footer-link-btn" id="footerSigninBtn">Sign in</button>
+      <a href="my-capes">My Capes</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="https://frostclient.eu/faq">FAQ</a>
+      <a href="https://frostclient.eu/privacy">Privacy Policy</a>
+      <a href="https://frostclient.eu/terms">Terms of Service</a>
+      <a href="https://frostclient.eu/imprint">Imprint</a>
+    </div>
+    <div class="footer-col">
+      <h4>Community</h4>
+      <div class="footer-social-icons">
+        <a href="https://discord.gg/Kn8ydsABU8" target="_blank" aria-label="Discord"><img src="icons/discord.webp" alt="Discord"/></a>
+        <a href="https://www.youtube.com/@frost-client" target="_blank" aria-label="YouTube"><img src="icons/youtube.webp" alt="YouTube"/></a>
+        <a href="https://www.tiktok.com/@frostclient.eu" target="_blank" aria-label="TikTok"><img src="icons/tiktok.webp" alt="TikTok"/></a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© Frost 2026. All rights reserved.<br>Made by: Zipp</span>
+    <span>Not affiliated with Minecraft or Mojang.</span>
+  </div>
+</footer>
+
+<script src="skinview3d.js"></script>
+<script src="store.js"></script>
+<script src="lite.js"></script>
+</body>
+</html>

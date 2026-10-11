@@ -39,6 +39,7 @@
 (function () {
   const STORE_API_URL = 'https://script.google.com/macros/s/AKfycbxF57u1UNBsonktp5_2EseJtFkBZR0-CCxyazOGVUmEBrcwjU1-t6Us41gcrRqCsGcR/exec';
   const CAPES_JSON_URL = 'https://bot.frostclient.eu/launcher/capes/capes.json';
+  const COLLECTIONS_JSON_URL = 'https://bot.frostclient.eu/launcher/capes/collections.json';
   const CAPES_BASE = 'https://bot.frostclient.eu/launcher/capes/';
   const DISCORD_CLIENT_ID = '1512834635640475898';
   const REDIRECT_URI_STORE = 'https://store.frostclient.eu';
@@ -173,7 +174,7 @@
     });
     window.history.replaceState(null, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
     if (!code) return null;
-    if (storedState && !returnedState.startsWith(storedState)) return null;
+    if (!storedState || !returnedState.startsWith(storedState)) return null;
     return { code: code, state: returnedState.slice(storedState.length) };
   }
 
@@ -190,15 +191,19 @@
 
   function applyProfile(data) {
     if (!data || !data.ok) return false;
+    const previous = profileCache || loadCachedProfile() || {};
     profileCache = {
       user: data.user || loadCachedUser(),
       liteActive: !!data.liteActive,
-      owned: Array.isArray(data.owned) ? data.owned : [],
+      litePlan: data.litePlan || null,
+      liteDiscountPercent: Number(data.liteDiscountPercent) || 0,
+      giftExpiresAt: data.giftExpiresAt || null,
+      owned: Array.isArray(data.owned) ? data.owned : (Array.isArray(previous.owned) ? previous.owned : []),
       token: data.token || loadToken()
     };
     if (data.token) saveToken(data.token);
     if (data.user) saveCachedUser(data.user);
-    saveCachedProfile({ user: profileCache.user, liteActive: profileCache.liteActive, owned: profileCache.owned });
+    saveCachedProfile({ user: profileCache.user, liteActive: profileCache.liteActive, litePlan: profileCache.litePlan, liteDiscountPercent: profileCache.liteDiscountPercent, giftExpiresAt: profileCache.giftExpiresAt, owned: profileCache.owned });
     notifyProfile();
     return true;
   }
@@ -215,7 +220,7 @@
   function refreshProfile() {
     const token = loadToken();
     if (!token) return Promise.resolve(null);
-    return fetchJsonWithRetry(STORE_API_URL + '?action=storeProfile&token=' + encodeURIComponent(token), { cache: 'no-store' }, 2)
+    return botPost('/store/profile', {})
       .then(function (data) {
         if (data && data.ok) {
           applyProfile(data);
@@ -345,7 +350,578 @@
     if (footerBtn) footerBtn.textContent = loggedIn ? 'Logout' : (authPending ? 'Signing in…' : 'Sign in');
   }
 
+  const CART_KEY = 'frostStoreCart';
+  const CART_LITE_KEY = 'frostStoreCartLite';
+  const LITE_PLANS = {
+    monthly: { key: 'monthly', name: 'Monthly', price: 2.90, period: '/ month', checkout: 'https://whop.com/checkout/plan_oKGeLuyTvJb5u', note: '1-day free trial', dueNow: 0, capes: ['lite'] },
+    annual: { key: 'annual', name: 'Annual', price: 29.90, period: '/ year', checkout: 'https://whop.com/checkout/plan_YDenpzviXSDXW', note: '', dueNow: 29.90, capes: ['lite', 'lite_year'] }
+  };
+
+  function loadLitePlan() {
+    try {
+        const v = localStorage.getItem(CART_LITE_KEY);
+        return LITE_PLANS[v] ? v : null;
+    } catch (e) {
+        return null;
+    }
+  }
+
+  function setLitePlan(plan) {
+    try {
+      if (plan && LITE_PLANS[plan]) localStorage.setItem(CART_LITE_KEY, plan);
+      else localStorage.removeItem(CART_LITE_KEY);
+    } catch (e) {}
+    updateCartBadge();
+    const list = loadCart();
+    cartListeners.forEach(function (fn) {
+      try {
+          fn(list);
+      } catch (e) {}
+    });
+  }
+  const CART_MAX_ITEMS = 20;
+  const CART_MAX_CAPES = 100;
+  const cartListeners = [];
+  const ICON_CART = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
+
+  function loadCart() {
+    try {
+        const list = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+        return Array.isArray(list) ? list.filter(function (id, i) { return typeof id === 'string' && id && list.indexOf(id) === i; }).slice(0, CART_MAX_CAPES) : [];
+    } catch (e) {
+        return [];
+    }
+  }
+
+  function saveCart(list) {
+    try {
+        localStorage.setItem(CART_KEY, JSON.stringify(list));
+    } catch (e) {}
+    updateCartBadge();
+    cartListeners.forEach(function (fn) {
+      try {
+          fn(list);
+      } catch (e) {}
+    });
+  }
+
+  function cartItemCount(list) {
+    const grouped = loadCartBundles().reduce(function (t, b) { return t + b.capes.length - 1; }, 0);
+    return (list || loadCart()).length - grouped;
+  }
+
+  function addToCart(id) {
+    const list = loadCart();
+    if (list.indexOf(id) !== -1) return true;
+    if (cartItemCount(list) >= CART_MAX_ITEMS || list.length >= CART_MAX_CAPES) return false;
+    list.push(id);
+    saveCart(list);
+    return true;
+  }
+
+  function removeFromCart(ids) {
+    const drop = Array.isArray(ids) ? ids : [ids];
+    saveCart(loadCart().filter(function (id) { return drop.indexOf(id) === -1; }));
+  }
+
+  const CART_BUNDLES_KEY = 'frostStoreCartBundles';
+
+  function loadCartBundles() {
+    let list;
+    try {
+        list = JSON.parse(localStorage.getItem(CART_BUNDLES_KEY) || '[]');
+    } catch (e) {
+        list = [];
+    }
+    if (!Array.isArray(list)) return [];
+    const cart = loadCart();
+    return list.filter(function (b) {
+      return b && typeof b.id === 'string' && Array.isArray(b.capes) && b.capes.length > 0 && b.capes.every(function (id) { return cart.indexOf(id) !== -1; });
+    });
+  }
+
+  function saveCartBundles(list) {
+    try {
+        localStorage.setItem(CART_BUNDLES_KEY, JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  function addBundleToCart(collectionId, capeIds) {
+    const list = loadCart();
+    const missing = capeIds.filter(function (id) { return list.indexOf(id) === -1; });
+    if (cartItemCount(list) >= CART_MAX_ITEMS || list.length + missing.length > CART_MAX_CAPES) return false;
+    const bundles = loadCartBundles().filter(function (b) {
+        return b.id !== collectionId && !b.capes.some(function (id) { return capeIds.indexOf(id) !== -1; });
+    });
+    bundles.push({ id: collectionId, capes: capeIds.slice() });
+    saveCartBundles(bundles);
+    saveCart(list.concat(missing));
+    return true;
+  }
+
+  function removeBundleFromCart(collectionId) {
+    const bundle = loadCartBundles().find(function (b) { return b.id === collectionId; });
+    saveCartBundles(loadCartBundles().filter(function (b) { return b.id !== collectionId; }));
+    if (bundle) removeFromCart(bundle.capes);
+  }
+
+  function ensureCartButton() {
+    if (document.getElementById('navCartBtn')) return;
+    const actions = document.querySelector('.nav-actions');
+    if (!actions) return;
+    const btn = document.createElement('a');
+    btn.id = 'navCartBtn';
+    btn.className = 'nav-cart-btn' + (document.body.dataset.page === 'cart' ? ' active' : '');
+    btn.href = '/cart';
+    btn.setAttribute('aria-label', 'Cart');
+    btn.innerHTML = ICON_CART + '<span class="nav-cart-count" id="navCartCount" hidden></span>';
+    actions.insertBefore(btn, actions.firstChild);
+    bindCartPop(btn);
+  }
+
+  const ICON_POP_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+  let cartPop = null;
+  let cartPopTimer = 0;
+  let cartPopCatalog = null;
+  let cartPopCatalogPromise = null;
+  let cartPopCollections = null;
+  function bundlePicks(colId, capes, n) {
+    let h = 2166136261;
+    const seedText = String(colId);
+    for (let k = 0; k < seedText.length; k++) {
+      h ^= seedText.charCodeAt(k);
+      h = Math.imul(h, 16777619);
+    }
+    const rand = function () {
+      h = Math.imul(h ^ (h >>> 15), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      h ^= h >>> 16;
+      return (h >>> 0) / 4294967296;
+    };
+    const pool = capes.slice().sort(function (a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); });
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      const t = pool[i];
+      pool[i] = pool[j];
+      pool[j] = t;
+    }
+    return pool.slice(0, n);
+  }
+
+  function popMoney(n) {
+      return '€' + (Number(n) || 0).toFixed(2);
+  }
+
+  function cartPopLoadCatalog() {
+    if (!cartPopCatalogPromise) {
+      cartPopCatalogPromise = Promise.all([fetchJsonWithRetry(CAPES_JSON_URL, { cache: 'no-store' }, 1), loadCollections()])
+        .then(function (res) {
+          const list = res[0];
+          cartPopCollections = res[1] || [];
+          cartPopCatalog = Array.isArray(list) ? list : [];
+          if (cartPop && cartPop.classList.contains('open')) renderCartPop();
+        })
+        .catch(function () {
+          cartPopCatalogPromise = null;
+        });
+    }
+    return cartPopCatalogPromise;
+  }
+
+  function cartPopRow(opts) {
+    const row = document.createElement('div');
+    row.className = 'cart-pop-row' + (opts.cls ? ' ' + opts.cls : '');
+    const main = document.createElement(opts.href ? 'a' : 'div');
+    main.className = 'cart-pop-main';
+    if (opts.href) main.href = opts.href;
+    main.appendChild(opts.thumb);
+    const info = document.createElement('div');
+    info.className = 'cart-pop-info';
+    const name = document.createElement('div');
+    name.className = 'cart-pop-name';
+    name.textContent = opts.name;
+    const price = document.createElement('div');
+    price.className = 'cart-pop-price' + (opts.priceCls ? ' ' + opts.priceCls : '');
+    price.textContent = opts.price;
+    if (opts.oldPrice) {
+      const old = document.createElement('s');
+      old.textContent = opts.oldPrice;
+      price.appendChild(document.createTextNode(' '));
+      price.appendChild(old);
+    }
+    info.appendChild(name);
+    info.appendChild(price);
+    main.appendChild(info);
+    row.appendChild(main);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'cart-pop-remove';
+    remove.setAttribute('aria-label', 'Remove ' + opts.name);
+    remove.innerHTML = ICON_POP_X;
+    remove.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      opts.onRemove();
+    });
+    row.appendChild(remove);
+    return row;
+  }
+
+  function cartPopThumb(cape) {
+    const el = document.createElement('div');
+    el.className = 'cart-pop-thumb';
+    el.style.backgroundImage = 'url("' + CAPES_BASE + String(cape.file).split('/').map(encodeURIComponent).join('/') + '")';
+    return el;
+  }
+
+  function renderCartPop() {
+    if (!cartPop) return;
+    const body = cartPop.querySelector('.cart-pop-body');
+    const foot = cartPop.querySelector('.cart-pop-foot');
+    const count = cartPop.querySelector('.cart-pop-count');
+    body.innerHTML = '';
+    const liteKey = loadLitePlan();
+    const lite = liteKey ? LITE_PLANS[liteKey] : null;
+    const ids = loadCart();
+    const n = cartItemCount(ids) + (lite ? 1 : 0);
+    count.textContent = n ? String(n) : '';
+    count.hidden = !n;
+    foot.hidden = !n;
+    if (!n) {
+      const empty = document.createElement('div');
+      empty.className = 'cart-pop-empty';
+      const text = document.createElement('p');
+      text.textContent = 'Your cart is empty.';
+      const browse = document.createElement('a');
+      browse.href = '/capes';
+      browse.textContent = 'Browse capes';
+      empty.appendChild(text);
+      empty.appendChild(browse);
+      body.appendChild(empty);
+      return;
+    }
+    let total = 0;
+    if (lite) {
+      const tile = document.createElement('div');
+      tile.className = 'cart-pop-thumb cart-pop-thumb--lite cart-pop-thumb--' + lite.key;
+      tile.textContent = 'LITE';
+      body.appendChild(cartPopRow({
+        cls: 'cart-pop-row--lite',
+        thumb: tile,
+        href: '/lite',
+        name: 'FrostClient Lite - ' + lite.name,
+        price: popMoney(lite.price) + ' ' + lite.period,
+        onRemove: function () { setLitePlan(null); }
+      }));
+      total += lite.dueNow;
+    }
+    if (!cartPopCatalog) {
+      if (ids.length) {
+        const loading = document.createElement('div');
+        loading.className = 'cart-pop-loading';
+        loading.textContent = 'Loading…';
+        body.appendChild(loading);
+      }
+      cartPopLoadCatalog();
+    } else {
+      const grouped = {};
+      loadCartBundles().forEach(function (b) {
+        const col = (cartPopCollections || []).find(function (c) { return c.id === b.id; });
+        if (!col) return;
+        const capes = b.capes.map(function (id) { return cartPopCatalog.find(function (c) { return c && c.id === id; }); })
+          .filter(function (c) { return c && !isOwned(c, profileCache); });
+        if (!capes.length) return;
+        b.capes.forEach(function (id) { grouped[id] = true; });
+        const base = capes.reduce(function (t, c) { return t + (Number(c.store && c.store.price) || 0); }, 0);
+        const memberSum = capes.reduce(function (t, c) {
+          const m = memberPrice(c);
+          return t + (m ? m.price : (Number(c.store && c.store.price) || 0));
+        }, 0);
+        const fullSum = col.capes.map(function (id) { return cartPopCatalog.find(function (c) { return c && c.id === id; }); })
+          .filter(isCartable).reduce(function (t, c) { return t + Number(c.store.price); }, 0);
+        const rate = capes.length >= 2 && collectionActive(col) ? bundleRate(col, fullSum) : 0;
+        const price = Math.round(memberSum * (1 - rate) * 100) / 100;
+        const tile = document.createElement('div');
+        tile.className = 'cart-pop-thumb cart-pop-thumb--bundle';
+        bundlePicks(col.id, capes, 3).forEach(function (c) {
+            tile.appendChild(cartPopThumb(c));
+        });
+        const opts = {
+          thumb: tile,
+          href: 'collection?id=' + encodeURIComponent(col.id),
+          name: col.name || col.id,
+          price: popMoney(price),
+          oldPrice: price < base ? popMoney(base) : '',
+          priceCls: rate > 0 ? 'is-bundle' : '',
+          onRemove: function () { removeBundleFromCart(col.id); }
+        };
+        if (lite) {
+          opts.cls = 'cart-pop-row--saved';
+          opts.price = 'Saved for later';
+          opts.oldPrice = '';
+          opts.priceCls = '';
+        } else {
+          total += price;
+        }
+        body.appendChild(cartPopRow(opts));
+      });
+      ids.forEach(function (id) {
+        if (grouped[id]) return;
+        const cape = cartPopCatalog.find(function (c) { return c && c.id === id; });
+        if (!cape || isOwned(cape, profileCache)) return;
+        const baseName = String(cape.name || cape.id);
+        const name = /\bcape$/i.test(baseName) ? baseName : baseName + ' - Cape';
+        const base = Number(cape.store && cape.store.price) || 0;
+        const member = memberPrice(cape);
+        const opts = {
+          thumb: cartPopThumb(cape),
+          href: 'cape?id=' + encodeURIComponent(cape.id),
+          name: name,
+          price: popMoney(member ? member.price : base),
+          oldPrice: member ? popMoney(base) : '',
+          priceCls: member ? 'is-member' : '',
+          onRemove: function () { removeFromCart(id); }
+        };
+        if (lite) {
+          opts.cls = 'cart-pop-row--saved';
+          opts.price = 'Saved for later';
+          opts.oldPrice = '';
+          opts.priceCls = '';
+        } else {
+          total += member ? member.price : base;
+        }
+        body.appendChild(cartPopRow(opts));
+      });
+    }
+    cartPop.querySelector('.cart-pop-total-label').textContent = lite ? 'Due today' : 'Subtotal';
+    cartPop.querySelector('.cart-pop-total').textContent = popMoney(Math.round(total * 100) / 100);
+  }
+
+  function ensureCartPop() {
+    if (cartPop) return cartPop;
+    cartPop = document.createElement('div');
+    cartPop.className = 'cart-pop';
+    cartPop.setAttribute('role', 'dialog');
+    cartPop.setAttribute('aria-label', 'Cart preview');
+    cartPop.innerHTML =
+      '<div class="cart-pop-head"><span>Your cart</span><span class="cart-pop-count" hidden></span></div>' +
+      '<div class="cart-pop-body"></div>' +
+      '<div class="cart-pop-foot" hidden>' +
+        '<div class="cart-pop-total-row"><span class="cart-pop-total-label">Subtotal</span><span class="cart-pop-total"></span></div>' +
+        '<a class="cart-pop-cta" href="/cart">View cart</a>' +
+      '</div>';
+    cartPop.addEventListener('mouseenter', openCartPop);
+    cartPop.addEventListener('mouseleave', scheduleCloseCartPop);
+    cartPop.addEventListener('focusout', function (e) {
+      if (!cartPop.contains(e.relatedTarget)) scheduleCloseCartPop();
+    });
+    document.body.appendChild(cartPop);
+    cartListeners.push(function () {
+      if (cartPop.classList.contains('open')) renderCartPop();
+    });
+    profileListeners.push(function () {
+      if (cartPop.classList.contains('open')) renderCartPop();
+    });
+    return cartPop;
+  }
+
+  function positionCartPop() {
+    const btn = document.getElementById('navCartBtn');
+    if (!cartPop || !btn) return;
+    const r = btn.getBoundingClientRect();
+    cartPop.style.top = Math.round(r.bottom + 10) + 'px';
+    cartPop.style.right = Math.max(8, Math.round(window.innerWidth - r.right - 12)) + 'px';
+  }
+
+  function openCartPop() {
+    clearTimeout(cartPopTimer);
+    const pop = ensureCartPop();
+    if (pop.classList.contains('open')) return;
+    closeNavMenu();
+    renderCartPop();
+    positionCartPop();
+    pop.classList.add('open');
+  }
+
+  function scheduleCloseCartPop() {
+    clearTimeout(cartPopTimer);
+    cartPopTimer = setTimeout(function () {
+      if (cartPop) cartPop.classList.remove('open');
+    }, 180);
+  }
+
+  function bindCartPop(btn) {
+    if (document.body.dataset.page === 'cart') return;
+    let canHover = true;
+    try {
+        canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    } catch (e) {}
+    if (!canHover) return;
+    btn.addEventListener('mouseenter', function () {
+      cartPopLoadCatalog();
+      openCartPop();
+    });
+    btn.addEventListener('mouseleave', scheduleCloseCartPop);
+    btn.addEventListener('focus', openCartPop);
+    btn.addEventListener('blur', function (e) {
+      if (!cartPop || !cartPop.contains(e.relatedTarget)) scheduleCloseCartPop();
+    });
+    window.addEventListener('resize', function () {
+      if (cartPop && cartPop.classList.contains('open')) positionCartPop();
+    });
+    window.addEventListener('scroll', function () {
+      if (cartPop && cartPop.classList.contains('open')) positionCartPop();
+    }, { passive: true });
+  }
+
+  function updateCartBadge() {
+    ensureCartButton();
+    const count = document.getElementById('navCartCount');
+    if (!count) return;
+    const n = cartItemCount() + (loadLitePlan() ? 1 : 0);
+    count.textContent = String(n);
+    count.hidden = n === 0;
+    const btn = document.getElementById('navCartBtn');
+    if (btn) btn.setAttribute('aria-label', n ? 'Cart, ' + n + ' item' + (n === 1 ? '' : 's') : 'Cart');
+  }
+
+  window.addEventListener('storage', function (e) {
+    if (e.key !== CART_KEY && e.key !== CART_LITE_KEY) return;
+    updateCartBadge();
+    const list = loadCart();
+    cartListeners.forEach(function (fn) {
+      try {
+          fn(list);
+      } catch (err) {}
+    });
+  });
+
+  function classify(r, g, b) {
+    const max = Math.max(r, g, b) / 255;
+    const min = Math.min(r, g, b) / 255;
+    const l = (max + min) / 2;
+    const d = max - min;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    if (l < 0.13) return 'black';
+    if (s < 0.18) return l > 0.82 ? 'white' : (l < 0.25 ? 'black' : 'gray');
+    let h;
+    const rn = r / 255, gn = g / 255, bn = b / 255;
+    if (max === rn) h = ((gn - bn) / d) % 6;
+    else if (max === gn) h = (bn - rn) / d + 2;
+    else h = (rn - gn) / d + 4;
+    h = (h * 60 + 360) % 360;
+    if (h < 15 || h >= 345) return 'red';
+    if (h < 42) return l < 0.38 ? 'brown' : 'orange';
+    if (h < 68) return l < 0.3 ? 'brown' : 'yellow';
+    if (h < 165) return 'green';
+    if (h < 255) return 'blue';
+    if (h < 290) return 'purple';
+    return 'pink';
+  }
+
+  function analyzeCapeColors(cape) {
+    const override = cape.store && Array.isArray(cape.store.colors) ? cape.store.colors.map(String) : null;
+    if (override && override.length) return Promise.resolve(override);
+    const url = CAPES_BASE + String(cape.file).split('/').map(encodeURIComponent).join('/');
+    return fetch(url, { cache: 'force-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('http_' + r.status);
+        return r.blob();
+      })
+      .then(function (blob) {
+          return createImageBitmap(blob);
+      })
+      .then(function (bmp) {
+        const w = bmp.width;
+        const h = bmp.height;
+        const x0 = Math.round(w / 64);
+        const y0 = Math.round(h / 32);
+        const fw = Math.max(1, Math.round(w * 10 / 64));
+        const fh = Math.max(1, Math.round(h * 16 / 32));
+        const canvas = document.createElement('canvas');
+        canvas.width = fw;
+        canvas.height = fh;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(bmp, x0, y0, fw, fh, 0, 0, fw, fh);
+        const data = ctx.getImageData(0, 0, fw, fh).data;
+        const counts = {};
+        let total = 0;
+        const step = Math.max(1, Math.floor((fw * fh) / 4000));
+        for (let i = 0; i < data.length; i += 4 * step) {
+          if (data[i + 3] < 128) continue;
+          const c = classify(data[i], data[i + 1], data[i + 2]);
+          counts[c] = (counts[c] || 0) + 1;
+          total++;
+        }
+        if (!total) return [];
+        const ranked = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+        return ranked.filter(function (c, i) { return i === 0 || counts[c] / total >= 0.2; }).slice(0, 3);
+      })
+      .catch(function () {
+          return [];
+      });
+  }
+
+  const capeColorMemo = {};
+  function capeColors(cape) {
+    if (!cape || !cape.file) return Promise.resolve([]);
+    if (cape.store && Array.isArray(cape.store.colors) && cape.store.colors.length) return Promise.resolve(cape.store.colors.map(String));
+    const key = cape.id + '|' + cape.file;
+    if (capeColorMemo[key]) return capeColorMemo[key];
+    let cached = null;
+    try {
+        cached = (JSON.parse(sessionStorage.getItem('frostStoreCapeColors.v1') || '{}') || {})[key] || null;
+    } catch (e) {
+        cached = null;
+    }
+    capeColorMemo[key] = cached ? Promise.resolve(cached) : analyzeCapeColors(cape).then(function (list) {
+      try {
+        const all = JSON.parse(sessionStorage.getItem('frostStoreCapeColors.v1') || '{}') || {};
+        all[key] = list;
+        sessionStorage.setItem('frostStoreCapeColors.v1', JSON.stringify(all));
+      } catch (e) {}
+      return list;
+    });
+    return capeColorMemo[key];
+  }
+
+  const BOT_API_URL = 'https://bot.frostclient.eu';
+
+  function botPost(path, body) {
+    return fetch(BOT_API_URL + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ token: loadToken() }, body || {})),
+      cache: 'no-store'
+    }).then(function (r) {
+        return r.json();
+    });
+  }
+
   window.FrostStore = {
+    botPost: botPost,
+    capeColors: capeColors,
+    memberPrice: memberPrice,
+    getCart: loadCart,
+    getLitePlan: loadLitePlan,
+    setLitePlan: setLitePlan,
+    litePlans: LITE_PLANS,
+    addToCart: addToCart,
+    removeFromCart: removeFromCart,
+    getCartBundles: loadCartBundles,
+    bundlePicks: bundlePicks,
+    addBundleToCart: addBundleToCart,
+    removeBundleFromCart: removeBundleFromCart,
+    inCart: function (id) {
+        return loadCart().indexOf(id) !== -1;
+    },
+    onCart: function (fn) {
+        cartListeners.push(fn);
+    },
+    cartMax: CART_MAX_ITEMS,
+    showToast: function (message) {
+        showStoreToast(message);
+    },
     apiUrl: STORE_API_URL,
     capesJsonUrl: CAPES_JSON_URL,
     capesBase: CAPES_BASE,
@@ -374,8 +950,122 @@
     buildCapeCard: buildCapeCard,
     limitedInfo: limitedInfo,
     isPartnerCape: isPartnerCape,
-    releaseTime: releaseTime
+    releaseTime: releaseTime,
+    isCartable: isCartable,
+    isStoreHidden: isStoreHidden,
+    loadCollections: loadCollections,
+    collectionActive: collectionActive,
+    collectionEnds: collectionEnds,
+    collectionBannerUrl: collectionBannerUrl,
+    bundleLabel: bundleLabel,
+    bundleRate: bundleRate,
+    buildCollectionCard: buildCollectionCard
   };
+
+  function isStoreHidden(cape) {
+    return !!(cape && cape.store && cape.store.hidden === true);
+  }
+
+  let collectionsPromise = null;
+  function loadCollections() {
+    if (!collectionsPromise) {
+      collectionsPromise = fetchJsonWithRetry(COLLECTIONS_JSON_URL, { cache: 'no-store' }, 2)
+        .then(function (data) { return Array.isArray(data) ? data : []; })
+        .catch(function () { return []; });
+    }
+    return collectionsPromise;
+  }
+
+  function collectionActive(col) {
+    if (!col || !col.id || col.hidden === true || !Array.isArray(col.capes) || !col.capes.length) return false;
+    const now = Date.now();
+    if (col.limitedUntil && !(new Date(col.limitedUntil).getTime() > now)) return false;
+    if (col.releaseDate && new Date(col.releaseDate).getTime() > now) return false;
+    return true;
+  }
+
+  function collectionEnds(col) {
+    if (!col || !col.limitedUntil) return null;
+    const until = new Date(col.limitedUntil).getTime();
+    if (!isFinite(until) || until <= Date.now()) return null;
+    const days = Math.ceil((until - Date.now()) / 86400000);
+    let text;
+    if (days <= 1) {
+      const hours = Math.max(1, Math.ceil((until - Date.now()) / 3600000));
+      text = 'Ends in ' + hours + (hours === 1 ? ' hour' : ' hours');
+    } else if (days <= 14) {
+      text = 'Ends in ' + days + ' days';
+    } else {
+      text = 'Until ' + new Date(until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+    return { until: until, text: text };
+  }
+
+  function bundleRate(col, fullSum) {
+    const fixed = Number(col && col.bundlePrice);
+    if (isFinite(fixed) && fixed > 0) return fullSum > fixed ? (fullSum - fixed) / fullSum : 0;
+    return Math.max(0, Math.min(90, Math.round(Number(col && col.bundleDiscount) || 0))) / 100;
+  }
+
+  function bundleLabel(col) {
+    if (col && Number(col.bundlePrice) > 0) return 'Bundle €' + Number(col.bundlePrice).toFixed(2);
+    if (col && Number(col.bundleDiscount) > 0) return 'Bundle −' + Math.round(Number(col.bundleDiscount)) + '%';
+    return '';
+  }
+
+  function collectionBannerUrl(col) {
+    return col && col.banner ? CAPES_BASE + String(col.banner).split('/').map(encodeURIComponent).join('/') : null;
+  }
+
+  function buildCollectionCard(col, catalog) {
+    const card = document.createElement('a');
+    card.className = 'collection-card';
+    card.href = 'collection?id=' + encodeURIComponent(col.id);
+    const banner = document.createElement('div');
+    banner.className = 'collection-card-banner';
+    const url = collectionBannerUrl(col);
+    if (url) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.addEventListener('error', function () { img.remove(); });
+      banner.appendChild(img);
+    }
+    const ends = collectionEnds(col);
+    if (ends) {
+      const lim = document.createElement('span');
+      lim.className = 'collection-limited';
+      lim.textContent = 'Limited · ' + ends.text;
+      banner.appendChild(lim);
+    }
+    card.appendChild(banner);
+    const body = document.createElement('div');
+    body.className = 'collection-card-body';
+    const text = document.createElement('div');
+    text.className = 'collection-card-text';
+    const name = document.createElement('div');
+    name.className = 'collection-card-name';
+    name.textContent = col.name || col.id;
+    text.appendChild(name);
+    const capes = col.capes.map(function (id) { return (catalog || []).find(function (c) { return c.id === id; }); }).filter(Boolean);
+    const meta = document.createElement('div');
+    meta.className = 'collection-card-meta';
+    meta.textContent = capes.length + (capes.length === 1 ? ' cape' : ' capes') + (bundleLabel(col) ? ' · ' + bundleLabel(col) : '');
+    text.appendChild(meta);
+    body.appendChild(text);
+    const thumbs = document.createElement('div');
+    thumbs.className = 'collection-card-thumbs';
+    capes.slice(0, 5).forEach(function (c) {
+      const t = document.createElement('span');
+      t.className = 'collection-thumb';
+      if (c.mature !== true) t.style.backgroundImage = 'url("' + CAPES_BASE + String(c.file).split('/').map(encodeURIComponent).join('/') + '")';
+      thumbs.appendChild(t);
+    });
+    body.appendChild(thumbs);
+    card.appendChild(body);
+    return card;
+  }
 
   function priceValue(cape) {
     const store = cape.store || {};
@@ -390,13 +1080,13 @@
 
   function pricePill(cape) {
     const store = cape.store || {};
-    if (store.subscription) return { text: store.subscription === 'annual' ? 'ANNUAL LITE' : 'LITE', cls: store.subscription === 'annual' ? 'pill-annual' : 'pill-lite' };
-    if (store.price === 0 || store.price === 'free') return { text: 'FREE', cls: 'pill-free' };
+    if (store.subscription) return { text: store.subscription === 'annual' ? 'Annual Lite' : 'Lite', cls: store.subscription === 'annual' ? 'pill-annual' : 'pill-lite' };
+    if (store.price === 0 || store.price === 'free') return { text: 'Free', cls: 'pill-free' };
     if (typeof store.price === 'number') {
       const sale = salePrice(cape);
       return { text: '€' + store.price.toFixed(2), cls: store.checkout ? (sale ? 'pill-sale' : '') : 'pill-soon', original: sale && store.checkout ? '€' + sale.original.toFixed(2) : null, percent: sale ? sale.percent : 0 };
     }
-    return { text: 'COMING SOON', cls: 'pill-soon' };
+    return { text: 'Coming soon', cls: 'pill-soon' };
   }
 
   function limitedInfo(cape) {
@@ -493,7 +1183,62 @@
     return job;
   }
 
+  const CSS_CAPE_FACES = [
+    ['front', 1, 1, 10, 16],
+    ['back', 12, 1, 10, 16],
+    ['left', 0, 1, 1, 16],
+    ['right', 11, 1, 1, 16],
+    ['top', 1, 0, 10, 1],
+    ['bottom', 11, 0, 10, 1]
+  ];
+  let animatedObserver = null;
+
+  function observeAnimatedCape(el, url) {
+    const start = function () {
+      el.querySelectorAll('.cape-3d-face img').forEach(function (img) {
+          img.src = url;
+      });
+    };
+    if (typeof IntersectionObserver === 'undefined') return start();
+    if (!animatedObserver) {
+      animatedObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          animatedObserver.unobserve(entry.target);
+          if (entry.target._startAnimation) entry.target._startAnimation();
+        });
+      }, { rootMargin: '200px' });
+    }
+    el._startAnimation = start;
+    animatedObserver.observe(el);
+  }
+
+  function buildAnimatedCapePreview(cape) {
+    const previewWrap = document.createElement('div');
+    previewWrap.className = 'cape-card-preview-wrap';
+    const stage = document.createElement('div');
+    stage.className = 'cape-3d';
+    const body = document.createElement('div');
+    body.className = 'cape-3d-body';
+    CSS_CAPE_FACES.forEach(function (f) {
+      const face = document.createElement('div');
+      face.className = 'cape-3d-face cape-3d-' + f[0];
+      const img = document.createElement('img');
+      img.alt = '';
+      img.decoding = 'async';
+      img.style.left = 'calc(var(--u) * ' + (-f[1]) + ')';
+      img.style.top = 'calc(var(--u) * ' + (-f[2]) + ')';
+      face.appendChild(img);
+      body.appendChild(face);
+    });
+    stage.appendChild(body);
+    previewWrap.appendChild(stage);
+    observeAnimatedCape(previewWrap, CAPES_BASE + String(cape.animated).split('/').map(encodeURIComponent).join('/'));
+    return previewWrap;
+  }
+
   function buildCapePreview(cape) {
+    if (cape.animated) return buildAnimatedCapePreview(cape);
     const previewWrap = document.createElement('div');
     previewWrap.className = 'cape-card-preview-wrap';
     const flat = document.createElement('div');
@@ -531,8 +1276,29 @@
     name.className = 'cape-card-name';
     name.textContent = cape.name || cape.id;
     card.appendChild(name);
+    const tags = document.createElement('div');
+    tags.className = 'cape-card-tags';
+    const addTag = function (text, cls) {
+      const tag = document.createElement('span');
+      tag.className = 'cape-card-tag ' + cls;
+      tag.textContent = text;
+      tags.appendChild(tag);
+    };
     const owned = isOwned(cape, profile);
-    const pill = owned ? { text: 'OWNED', cls: 'pill-owned' } : pricePill(cape);
+    const limited = limitedInfo(cape);
+    if (limited && limited.active) addTag('Limited', 'tag-limited');
+    if (isPartnerCape(cape)) addTag('Partner', 'tag-partner');
+    if (cape.animated) addTag('Animated', 'tag-animated');
+    else addTag('Static', 'tag-static');
+    card.appendChild(tags);
+    const pill = owned ? { text: 'Owned', cls: 'pill-owned' } : pricePill(cape);
+    const member = owned ? null : memberPrice(cape, profile);
+    if (member) {
+      pill.original = pill.original || ('€' + Number(cape.store.price).toFixed(2));
+      pill.text = '€' + member.price.toFixed(2);
+      pill.cls = (pill.cls ? pill.cls + ' ' : '') + 'pill-member';
+      pill.percent = pill.percent || 0;
+    }
     const pillEl = document.createElement('span');
     pillEl.className = 'cape-price-pill' + (pill.cls ? ' ' + pill.cls : '');
     if (pill.original) {
@@ -541,34 +1307,70 @@
       old.textContent = pill.original;
       pillEl.appendChild(old);
       pillEl.appendChild(document.createTextNode(pill.text));
-      const sale = document.createElement('span');
-      sale.className = 'cape-sale-badge';
-      sale.textContent = '-' + pill.percent + '%';
-      card.appendChild(sale);
+      if (pill.percent) {
+        const sale = document.createElement('span');
+        sale.className = 'cape-sale-badge';
+        sale.textContent = '-' + pill.percent + '%';
+        card.appendChild(sale);
+      }
     } else {
       pillEl.textContent = pill.text;
     }
     card.appendChild(pillEl);
-    const limited = limitedInfo(cape);
-    if (limited && limited.active && !owned) {
-      const lim = document.createElement('span');
-      lim.className = 'cape-limited-badge';
-      lim.textContent = 'LIMITED';
-      card.appendChild(lim);
-    }
-    if (isPartnerCape(cape)) {
-      const partner = document.createElement('span');
-      partner.className = 'cape-partner-badge';
-      partner.textContent = 'PARTNER';
-      card.appendChild(partner);
-    }
-    if (cape.animated) {
-      const anim = document.createElement('span');
-      anim.className = 'cape-animated-badge';
-      anim.textContent = 'ANIMATED';
-      card.appendChild(anim);
-    }
+    if (!owned && isCartable(cape)) card.appendChild(buildQuickAdd(cape));
     return card;
+  }
+
+  function isCartable(cape) {
+    const store = cape && cape.store;
+    if (!store || store.subscription || !store.checkout) return false;
+    const price = Number(store.price);
+    if (!isFinite(price) || price <= 0) return false;
+    const limited = limitedInfo(cape);
+    return !(limited && !limited.active);
+  }
+
+  const ICON_CART_PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
+  const ICON_CART_CHECK = '<svg class="qa-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><svg class="qa-remove" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+
+  function buildQuickAdd(cape) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cape-quick-add';
+    const paint = function () {
+      const added = loadCart().indexOf(cape.id) !== -1;
+      btn.classList.toggle('is-added', added);
+      btn.innerHTML = added ? ICON_CART_CHECK : ICON_CART_PLUS;
+      const label = added ? 'Remove ' + (cape.name || cape.id) + ' from cart' : 'Add ' + (cape.name || cape.id) + ' to cart';
+      btn.setAttribute('aria-label', label);
+      btn.title = added ? 'Remove from cart' : 'Add to cart';
+    };
+    paint();
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (loadCart().indexOf(cape.id) !== -1) {
+        removeFromCart(cape.id);
+        paint();
+        return;
+      }
+      if (!addToCart(cape.id)) {
+        showStoreToast('Your cart is full (' + CART_MAX_ITEMS + ' items). Check out first.');
+        return;
+      }
+      if (loadLitePlan()) showStoreToast('Added to Saved for later. Capes are checked out separately from FrostClient Lite.');
+      paint();
+      btn.classList.add('hold');
+      btn.classList.add('just-added');
+      setTimeout(function () {
+          btn.classList.remove('just-added');
+      }, 600);
+    });
+    btn.addEventListener('mouseleave', function () {
+        btn.classList.remove('hold');
+    });
+    cartListeners.push(paint);
+    return btn;
   }
 
   function bindAuthButtons() {
@@ -589,19 +1391,32 @@
     });
   }
 
-  function init() {
-    if (loadToken()) {
-      const cached = loadCachedProfile();
-      if (cached) {
-        profileCache = {
-          user: cached.user || loadCachedUser(),
-          liteActive: !!cached.liteActive,
-          owned: Array.isArray(cached.owned) ? cached.owned : [],
-          token: loadToken()
-        };
-      }
+  if (loadToken()) {
+    const cachedProfile = loadCachedProfile();
+    if (cachedProfile) {
+      profileCache = {
+        user: cachedProfile.user || loadCachedUser(),
+        liteActive: !!cachedProfile.liteActive,
+        litePlan: cachedProfile.litePlan || null,
+        liteDiscountPercent: Number(cachedProfile.liteDiscountPercent) || 0,
+        giftExpiresAt: cachedProfile.giftExpiresAt || null,
+        owned: Array.isArray(cachedProfile.owned) ? cachedProfile.owned : [],
+        token: loadToken()
+      };
     }
+  }
+
+  function memberPrice(cape, profile) {
+    const p = profile === undefined ? profileCache : profile;
+    const pct = p && p.liteDiscountPercent ? p.liteDiscountPercent : 0;
+    const base = Number(cape && cape.store && cape.store.price);
+    if (!pct || !isFinite(base) || base <= 0 || !(cape.store && cape.store.checkout) || cape.store.subscription) return null;
+    return { price: Math.round(base * (1 - pct / 100) * 100) / 100, percent: pct };
+  }
+
+  function init() {
     bindAuthButtons();
+    updateCartBadge();
     updateNav();
     profileListeners.push(updateNav);
     const oauthReturn = document.body.dataset.storeAuthPage === 'ty' ? null : consumeOauthReturn();
@@ -620,6 +1435,7 @@
       : refreshProfile();
     const giftReturn = oauthReturn ? /\.g\.([a-z0-9]{4,32})$/.exec(oauthReturn.state || '') : null;
     const capeReturn = oauthReturn ? /\.c\.([a-z0-9_-]{1,64})$/.exec(oauthReturn.state || '') : null;
+    const cartReturn = oauthReturn ? /\.k$/.test(oauthReturn.state || '') : false;
     authFlow.then(function () {
       if (giftReturn) {
         window.location.replace('/gift?c=' + encodeURIComponent(giftReturn[1]));
@@ -627,6 +1443,10 @@
       }
       if (capeReturn) {
         window.location.replace('/cape?id=' + encodeURIComponent(capeReturn[1]));
+        return;
+      }
+      if (cartReturn) {
+        window.location.replace('/cart');
         return;
       }
       authSettled = true;
@@ -643,122 +1463,375 @@
   }
 })();
 
+
 (function () {
-  const grid = document.getElementById('capeGrid');
+  const grid = document.getElementById('homeCapeGrid');
   if (!grid) return;
   const Store = window.FrostStore;
+  const HOME_CAPES = 12;
   let catalog = null;
-  let searchQuery = '';
-  let sortMode = 'newest';
-
   function render() {
     if (!catalog) return;
     const profile = Store.getProfile();
-    const order = {};
-    catalog.forEach(function (cape, i) {
-        order[cape.id] = i;
-    });
-    const visible = catalog.filter(function (cape) {
-      if (!cape.store || cape.store.subscription) return false;
+    const list = catalog.filter(function (cape) {
+      if (!cape.store || cape.store.subscription || cape.mature === true || Store.isStoreHidden(cape)) return false;
+      if (Store.isOwned(cape, profile)) return false;
       const limited = Store.limitedInfo(cape);
-      if (limited && !limited.active) return false;
-      if (searchQuery && String(cape.name || cape.id).toLowerCase().indexOf(searchQuery) === -1) return false;
-      return true;
-    });
-    if (sortMode === 'newest' || sortMode === 'oldest') {
-      const dir = sortMode === 'newest' ? -1 : 1;
-      visible.sort(function (a, b) {
-        const ta = Store.releaseTime(a);
-        const tb = Store.releaseTime(b);
-        if (ta === null && tb !== null) return 1;
-        if (tb === null && ta !== null) return -1;
-        if (ta !== tb) return dir * (ta - tb);
-        return dir * (order[a.id] - order[b.id]);
-      });
-    } else if (sortMode === 'price-asc') {
-      visible.sort(function (a, b) {
-          return Store.priceValue(a) - Store.priceValue(b);
-      });
-    } else if (sortMode === 'price-desc') {
-      const pv = function (c) {
-          const v = Store.priceValue(c);
-          return v === Infinity ? -Infinity : v;
-      };
-      visible.sort(function (a, b) {
-          return pv(b) - pv(a);
-      });
-    }
+      return !(limited && !limited.active);
+    }).sort(function (a, b) {
+      const ta = Store.releaseTime(a);
+      const tb = Store.releaseTime(b);
+      if (ta === null && tb !== null) return 1;
+      if (tb === null && ta !== null) return -1;
+      if (ta !== tb) return tb - ta;
+      return catalog.indexOf(b) - catalog.indexOf(a);
+    }).slice(0, HOME_CAPES);
     grid.innerHTML = '';
-    if (visible.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'store-empty';
-      empty.textContent = searchQuery ? 'No capes match your search.' : 'No capes available right now.';
-      grid.appendChild(empty);
-      return;
-    }
-    visible.forEach(function (cape) {
-      grid.appendChild(Store.buildCapeCard(cape, profile));
+    list.forEach(function (cape) {
+        grid.appendChild(Store.buildCapeCard(cape, profile));
     });
   }
-
-  const searchInput = document.getElementById('storeSearch');
-  if (searchInput) {
-    searchInput.addEventListener('input', function () {
-      searchQuery = searchInput.value.trim().toLowerCase();
-      render();
-    });
-  }
-  const sortSelect = document.getElementById('storeSort');
-  if (sortSelect) {
-    sortSelect.addEventListener('change', function () {
-      sortMode = sortSelect.value;
-      render();
-    });
-  }
-
-  const teaser = document.getElementById('liteTeaser');
-  const teaserGrid = document.getElementById('liteTeaserGrid');
-  function renderTeaser() {
-    if (!teaser || !teaserGrid || !catalog) return;
-    const profile = Store.getProfile();
-    const hasToken = !!Store.loadToken();
-    if (hasToken && !Store.isAuthSettled()) return;
-    const annual = catalog.find(function (c) {
-        return c.id === 'lite_year';
-    });
-    const lite = catalog.find(function (c) {
-        return c.id === 'lite';
-    });
-    const showAnnual = annual && !Store.isOwned(annual, profile);
-    const showLite = lite && !Store.isOwned(lite, profile);
-    if (!showAnnual && !showLite) {
-      teaser.hidden = true;
-      return;
-    }
-    teaserGrid.innerHTML = '';
-    if (showAnnual) teaserGrid.appendChild(Store.buildCapeCard(annual, profile));
-    if (showLite) teaserGrid.appendChild(Store.buildCapeCard(lite, profile));
-    teaser.hidden = false;
-  }
-
-  Store.onProfile(function () {
-      render();
-      renderTeaser();
-  });
-
+  Store.onProfile(render);
   Store.fetchJsonWithRetry(Store.capesJsonUrl, { cache: 'no-store' }, 2)
     .then(function (data) {
       catalog = Array.isArray(data) ? data : [];
       render();
-      renderTeaser();
     })
     .catch(function () {
-      grid.innerHTML = '';
-      const err = document.createElement('div');
-      err.className = 'store-error';
-      err.textContent = "Couldn't load the cape catalog. Please try again later.";
-      grid.appendChild(err);
+      grid.innerHTML = '<div class="store-error">Couldn\'t load capes. Please try again later.</div>';
     });
+})();
+
+(function () {
+  const section = document.getElementById('homeCollection');
+  if (!section) return;
+  const Store = window.FrostStore;
+  const SLIDE_MS = 7000;
+  const MOVE_MS = 1100;
+  const LITE_ITEM = {
+    lite: true,
+    href: '/lite',
+    name: 'FrostClient Lite',
+    deal: 'Up to 10% off the store',
+    cta: 'Learn more →'
+  };
+  const track = section.querySelector('.featured-track');
+  const viewport = section.querySelector('.featured-viewport');
+  const line = section.querySelector('.featured-line-fill');
+  const lineWrap = section.querySelector('.featured-line');
+  const dotsWrap = section.querySelector('.featured-dots');
+  const panel = section.querySelector('.featured-panel');
+  const panelInfo = panel.querySelector('.featured-panel-info');
+  const panelName = panel.querySelector('.home-collection-name');
+  const panelDeal = panel.querySelector('.home-collection-deal');
+  const panelCta = panel.querySelector('.home-collection-cta');
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let collections = null;
+  let liteShown = null;
+  let items = [];
+  let slides = [];
+  let dots = [];
+  let index = 0;
+  let elapsed = 0;
+  let last = null;
+  let paused = false;
+  let moving = false;
+  let queued = null;
+  let fadeTimer = null;
+  let running = false;
+
+  function itemFromCollection(col) {
+    return {
+      href: 'collection?id=' + encodeURIComponent(col.id),
+      name: col.name || col.id,
+      deal: Store.bundleLabel(col),
+      cta: 'View collection →',
+      col: col
+    };
+  }
+
+  function buildLiteBanner() {
+    const banner = document.createElement('div');
+    banner.className = 'featured-banner featured-banner--lite';
+    const rain = document.createElement('span');
+    rain.className = 'featured-lite-rain';
+    rain.setAttribute('aria-hidden', 'true');
+    const BOLT = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>';
+    for (let n = 0; n < 18; n++) {
+      const bolt = document.createElement('span');
+      bolt.className = 'featured-lite-bolt';
+      const size = 12 + Math.round(Math.random() * 16);
+      bolt.style.left = (2 + Math.random() * 96).toFixed(1) + '%';
+      bolt.style.width = size + 'px';
+      bolt.style.height = size + 'px';
+      bolt.style.opacity = (0.08 + Math.random() * 0.12).toFixed(2);
+      bolt.style.animationDuration = (5 + Math.random() * 5).toFixed(2) + 's';
+      bolt.style.animationDelay = (-Math.random() * 10).toFixed(2) + 's';
+      bolt.style.setProperty('--tilt', (Math.random() * 30 - 15).toFixed(0) + 'deg');
+      bolt.innerHTML = BOLT;
+      rain.appendChild(bolt);
+    }
+    banner.innerHTML = '<span class="featured-lite-glow" aria-hidden="true"></span>'
+      + '<span class="featured-lite-text"><span class="featured-lite-eyebrow">FrostClient Lite</span>'
+      + '<span class="featured-lite-title">More FPS. Exclusive perks.</span>'
+      + '<span class="featured-lite-desc">Up to +400 FPS over regular Frost, exclusive Lite capes, priority support and up to 10% off everything in the store.</span></span>';
+    banner.insertBefore(rain, banner.firstChild);
+    return banner;
+  }
+
+  function buildCollectionBanner(col) {
+    const banner = document.createElement('div');
+    banner.className = 'featured-banner';
+    const fallback = function () {
+      banner.classList.add('is-empty');
+      const title = document.createElement('span');
+      title.className = 'featured-fallback-title';
+      title.textContent = col.name || col.id;
+      banner.appendChild(title);
+    };
+    const url = Store.collectionBannerUrl(col);
+    if (url) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = '';
+      img.addEventListener('error', function () {
+        img.remove();
+        fallback();
+      });
+      banner.appendChild(img);
+    } else {
+      fallback();
+    }
+    const ends = Store.collectionEnds(col);
+    if (ends) {
+      const lim = document.createElement('span');
+      lim.className = 'collection-limited collection-limited--lg';
+      lim.textContent = 'Limited · ' + ends.text;
+      lim.title = 'Available until ' + new Date(ends.until).toLocaleString();
+      banner.appendChild(lim);
+    }
+    return banner;
+  }
+
+  function fillPanel(item) {
+    panel.href = item.href;
+    panel.classList.toggle('is-lite', !!item.lite);
+    panel.setAttribute('aria-label', item.lite ? 'Learn more about FrostClient Lite' : 'View the ' + item.name + ' collection');
+    panelName.textContent = item.name;
+    panelDeal.textContent = item.deal || '';
+    panelDeal.hidden = !item.deal;
+    panelCta.textContent = item.cta;
+  }
+
+  function showPanel(item) {
+    clearTimeout(fadeTimer);
+    panelInfo.classList.add('is-fading');
+    panelCta.classList.add('is-fading');
+    fadeTimer = setTimeout(function () {
+      fillPanel(item);
+      panelInfo.classList.remove('is-fading');
+      panelCta.classList.remove('is-fading');
+    }, 260);
+  }
+
+  function paint() {
+    slides.forEach(function (slide, i) {
+      slide.setAttribute('aria-hidden', i === index ? 'false' : 'true');
+      slide.tabIndex = i === index ? 0 : -1;
+    });
+    dots.forEach(function (dot, i) {
+      dot.classList.toggle('is-active', i === index);
+      dot.setAttribute('aria-current', i === index ? 'true' : 'false');
+    });
+    line.style.transform = 'scaleX(0)';
+  }
+
+  function go(i) {
+    if (slides.length < 2) return;
+    const target = (i + slides.length) % slides.length;
+    if (moving) {
+      queued = target;
+      return;
+    }
+    if (target === index) return;
+    const from = slides[index];
+    const to = slides[target];
+    index = target;
+    elapsed = 0;
+    paint();
+    showPanel(items[target]);
+    if (reduceMotion) {
+      track.insertBefore(to, track.firstChild);
+      return;
+    }
+    moving = true;
+    track.insertBefore(to, from.nextSibling);
+    track.style.transition = 'none';
+    track.style.transform = 'translateX(0)';
+    void track.offsetWidth;
+    track.style.transition = 'transform ' + MOVE_MS + 'ms cubic-bezier(0.65, 0, 0.35, 1)';
+    track.style.transform = 'translateX(-100%)';
+    setTimeout(function () {
+      track.style.transition = 'none';
+      track.appendChild(from);
+      track.style.transform = 'translateX(0)';
+      void track.offsetWidth;
+      track.style.transition = '';
+      moving = false;
+      if (queued !== null) {
+        const next = queued;
+        queued = null;
+        go(next);
+      }
+    }, MOVE_MS + 30);
+  }
+
+  function frame(now) {
+    if (last === null) last = now;
+    const dt = now - last;
+    last = now;
+    if (slides.length > 1 && !paused && !moving && !document.hidden) {
+      elapsed += dt;
+      line.style.transform = 'scaleX(' + Math.min(1, elapsed / SLIDE_MS) + ')';
+      if (elapsed >= SLIDE_MS) go(index + 1);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function build() {
+    if (!collections) return;
+    const profile = Store.getProfile();
+    const withLite = !(profile && profile.liteActive);
+    if (withLite === liteShown) return;
+    liteShown = withLite;
+    items = (withLite ? [LITE_ITEM] : []).concat(collections.map(itemFromCollection));
+    track.innerHTML = '';
+    dotsWrap.innerHTML = '';
+    track.style.transition = 'none';
+    track.style.transform = 'translateX(0)';
+    index = 0;
+    elapsed = 0;
+    queued = null;
+    moving = false;
+    slides = items.map(function (item) {
+      const slide = document.createElement('a');
+      slide.className = 'featured-slide';
+      slide.href = item.href;
+      slide.setAttribute('aria-label', item.lite ? 'FrostClient Lite' : item.name + ' collection');
+      slide.appendChild(item.lite ? buildLiteBanner() : buildCollectionBanner(item.col));
+      track.appendChild(slide);
+      return slide;
+    });
+    dots = slides.length > 1 ? items.map(function (item, i) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'featured-dot';
+      btn.setAttribute('aria-label', 'Show ' + item.name);
+      btn.addEventListener('click', function () {
+          go(i);
+      });
+      dotsWrap.appendChild(btn);
+      return btn;
+    }) : [];
+    dotsWrap.hidden = slides.length < 2;
+    lineWrap.hidden = slides.length < 2;
+    section.hidden = !slides.length;
+    if (!slides.length) return;
+    fillPanel(items[0]);
+    paint();
+    if (!running) {
+      running = true;
+      requestAnimationFrame(frame);
+    }
+  }
+
+  viewport.addEventListener('mouseenter', function () { paused = true; });
+  viewport.addEventListener('mouseleave', function () { paused = false; });
+  section.addEventListener('focusin', function () { paused = true; });
+  section.addEventListener('focusout', function () { paused = false; });
+  let touchX = null;
+  viewport.addEventListener('touchstart', function (e) { touchX = e.touches[0].clientX; }, { passive: true });
+  viewport.addEventListener('touchend', function (e) {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    touchX = null;
+    if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1));
+  });
+
+  Store.loadCollections().then(function (list) {
+    collections = list.filter(function (col) { return Store.collectionActive(col) && col.featured === true; }).sort(function (a, b) {
+      const ta = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
+      const tb = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
+      return tb - ta || list.indexOf(b) - list.indexOf(a);
+    });
+    build();
+  });
+  Store.onProfile(build);
+})();
+
+(function () {
+  const cards = document.querySelectorAll('.js-lite-plan');
+  if (!cards.length) return;
+  const Store = window.FrostStore;
+  const CANCEL_URL = 'https://frostclient.eu/lite/cancel';
+  function giftDate(iso) {
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  function render(profile) {
+    const active = !!(profile && profile.liteActive);
+    const plan = active ? (profile.litePlan || 'monthly') : null;
+    const purchased = plan === 'monthly' || plan === 'annual';
+    cards.forEach(function (card) {
+      const cardPlan = card.dataset.plan;
+      const mine = purchased && plan === cardPlan;
+      const gifted = (plan === 'gifted' || plan === 'boost') && cardPlan === 'monthly';
+      card.classList.toggle('is-current', mine);
+      card.classList.toggle('is-gifted', gifted);
+      const cta = card.querySelector('.js-lite-cta');
+      const badge = card.querySelector('.js-lite-current');
+      if (badge) {
+        badge.hidden = !(mine || gifted);
+        badge.textContent = gifted ? (plan === 'boost' ? 'Boost' : 'Gifted') : 'Your plan';
+        badge.classList.toggle('lite-plan-current--gifted', gifted);
+      }
+      if (!cta) return;
+      if (mine) {
+        cta.textContent = 'Manage subscription';
+        cta.href = CANCEL_URL;
+      } else if (purchased) {
+        cta.textContent = cardPlan === 'annual' ? 'Switch to annual' : 'Switch to monthly';
+        cta.href = cta.dataset.checkout;
+      } else {
+        cta.textContent = cta.dataset.label;
+        cta.href = '/cart';
+      }
+    });
+    document.querySelectorAll('.js-lite-status').forEach(function (el) {
+      el.hidden = !active;
+      const text = el.querySelector('.js-lite-status-text');
+      if (!text || !active) return;
+      if (plan === 'gifted') {
+        const until = profile.giftExpiresAt ? giftDate(profile.giftExpiresAt) : '';
+        text.textContent = 'You have FrostClient Lite as a gift' + (until ? ' until ' + until : '') + '. Subscribe below to keep it after the gift ends.';
+      } else if (plan === 'boost') {
+        text.textContent = 'You have FrostClient Lite for boosting our Discord server. It stays active while you keep boosting.';
+      } else {
+        text.textContent = 'Your Lite subscription is active. Sign in to the Frost Launcher with this Discord account to use it.';
+      }
+    });
+  }
+  cards.forEach(function (card) {
+    const cta = card.querySelector('.js-lite-cta');
+    if (!cta) return;
+    cta.dataset.label = cta.textContent;
+    cta.dataset.checkout = cta.getAttribute('href');
+    cta.addEventListener('click', function () {
+        if (cta.getAttribute('href') === '/cart') Store.setLitePlan(card.dataset.plan);
+    });
+  });
+  Store.onProfile(render);
 })();
 
 (function () {

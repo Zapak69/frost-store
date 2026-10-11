@@ -327,6 +327,36 @@
     return { text: 'Coming soon', pill: 'pill-soon' };
   }
 
+  const ICON_CART_ADD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
+  const ICON_CART_DONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+  function buildAddToCart() {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'detail-cta cta-cart';
+    const paint = function () {
+      const added = Store.inCart(cape.id);
+      btn.classList.toggle('is-added', added);
+      const saved = added && !!Store.getLitePlan();
+      btn.innerHTML = (added ? ICON_CART_DONE : ICON_CART_ADD) + '<span>' + (added ? (saved ? 'Saved for later' : 'In Cart') : 'Add to Cart') + '</span>';
+    };
+    paint();
+    btn.addEventListener('click', function () {
+      if (Store.inCart(cape.id)) {
+        window.location.href = '/cart';
+        return;
+      }
+      if (!Store.addToCart(cape.id)) {
+        Store.showToast('Your cart is full (' + Store.cartMax + ' items). Check out first.');
+        return;
+      }
+      if (Store.getLitePlan()) Store.showToast('Added to Saved for later. Capes are checked out separately from FrostClient Lite.');
+      paint();
+    });
+    Store.onCart(paint);
+    return btn;
+  }
+
   function buildCta(profile) {
     const store = cape.store || {};
     const owned = isOwned(profile);
@@ -386,11 +416,39 @@
     }
     if (store.checkout) {
       const loggedIn = !!(profile && profile.user);
-      const btn = document.createElement(loggedIn ? 'a' : 'button');
+      const row = document.createElement('div');
+      row.className = 'detail-cta-row';
+      const btn = document.createElement('button');
+      btn.type = 'button';
       btn.className = 'detail-cta cta-buy';
       if (loggedIn) {
-        btn.href = store.checkout;
-        btn.textContent = 'Purchase';
+        btn.textContent = 'Buy Now';
+        btn.addEventListener('click', function () {
+          if (btn.disabled) return;
+          btn.disabled = true;
+          btn.classList.add('is-loading');
+          Store.botPost('/store/cart-checkout', { capes: [cape.id], returnBase: window.location.origin }).then(function (data) {
+            if (data && data.ok && data.checkoutUrl) {
+              try {
+                  localStorage.setItem('frostStorePendingCart', JSON.stringify({ cartId: data.cartId, capes: [cape.id], at: Date.now() }));
+              } catch (e) {}
+              window.location.href = data.checkoutUrl;
+              return;
+            }
+            btn.disabled = false;
+            btn.classList.remove('is-loading');
+            if (data && data.error === 'token_expired') {
+              Store.clearAuth();
+              Store.startLogin('store');
+              return;
+            }
+            Store.showToast(data && data.error === 'empty_cart' ? 'You already own this cape.' : "Checkout couldn't start. Please try again in a moment.");
+          }).catch(function () {
+            btn.disabled = false;
+            btn.classList.remove('is-loading');
+            Store.showToast('Network error. Please try again.');
+          });
+        });
       } else {
         btn.type = 'button';
         btn.textContent = 'Sign in to purchase';
@@ -398,7 +456,9 @@
             Store.startLogin('store');
         });
       }
-      wrap.appendChild(btn);
+      row.appendChild(btn);
+      row.appendChild(buildAddToCart());
+      wrap.appendChild(row);
       const note = document.createElement('div');
       note.className = 'detail-cta-note';
       note.textContent = loggedIn
@@ -439,16 +499,24 @@
       pill.textContent = price.text.toUpperCase();
       priceRow.appendChild(pill);
     } else {
-      if (price.original) {
+      const member = Store.memberPrice(cape, profile);
+      const oldText = price.original || (member ? '€' + Number(store.price).toFixed(2) : '');
+      if (oldText) {
         const old = document.createElement('s');
         old.className = 'detail-price-old';
-        old.textContent = price.original;
+        old.textContent = oldText;
         priceRow.appendChild(old);
       }
       const amount = document.createElement('span');
-      amount.className = 'detail-price';
-      amount.textContent = price.text;
+      amount.className = 'detail-price' + (member ? ' detail-price--member' : '');
+      amount.textContent = member ? '€' + member.price.toFixed(2) : price.text;
       priceRow.appendChild(amount);
+      if (member) {
+        const tag = document.createElement('span');
+        tag.className = 'detail-member-badge';
+        tag.textContent = 'LITE -' + member.percent + '%';
+        priceRow.appendChild(tag);
+      }
       if (price.original) {
         const sale = document.createElement('span');
         sale.className = 'detail-sale-badge';
@@ -463,6 +531,57 @@
       priceRow.appendChild(partner);
     }
     info.appendChild(priceRow);
+    const variants = variantList();
+    if (variants.length > 1) {
+      const wrap = document.createElement('div');
+      wrap.className = 'detail-variants';
+      const label = document.createElement('div');
+      label.className = 'detail-variants-label';
+      label.textContent = 'Variants';
+      if (cape.variantUnlock === true) {
+        const note = document.createElement('span');
+        note.className = 'detail-variants-note';
+        note.textContent = 'Own one, unlock all';
+        label.appendChild(note);
+      }
+      wrap.appendChild(label);
+      const row = document.createElement('div');
+      row.className = 'detail-variants-row';
+      variants.forEach(function (v) {
+        const a = document.createElement('a');
+        a.className = 'detail-variant' + (v.id === cape.id ? ' is-current' : '');
+        a.href = '/cape?id=' + encodeURIComponent(v.id);
+        a.title = v.name || v.id;
+        a.setAttribute('aria-label', (v.name || v.id) + (v.id === cape.id ? ' (selected)' : ''));
+        if (v.id === cape.id) a.setAttribute('aria-current', 'page');
+        const thumb = document.createElement('span');
+        thumb.className = 'detail-variant-thumb';
+        thumb.style.backgroundImage = 'url("' + Store.capesBase + String(v.file).split('/').map(encodeURIComponent).join('/') + '")';
+        a.appendChild(thumb);
+        const name = document.createElement('span');
+        name.className = 'detail-variant-name';
+        name.textContent = v.name || v.id;
+        a.appendChild(name);
+        row.appendChild(a);
+      });
+      wrap.appendChild(row);
+      info.appendChild(wrap);
+    }
+    const col = (capeCollections || []).find(function (c) { return Store.collectionActive(c) && c.capes.indexOf(cape.id) !== -1; });
+    if (col) {
+      const link = document.createElement('a');
+      link.className = 'detail-collection';
+      link.href = 'collection?id=' + encodeURIComponent(col.id);
+      const label = document.createElement('span');
+      label.className = 'detail-collection-label';
+      label.textContent = 'Part of a collection';
+      const name = document.createElement('span');
+      name.className = 'detail-collection-name';
+      name.textContent = (col.name || col.id) + (Store.bundleLabel(col) ? ' · ' + Store.bundleLabel(col).toLowerCase() : '') + ' →';
+      link.appendChild(label);
+      link.appendChild(name);
+      info.appendChild(link);
+    }
     const meta = document.createElement('div');
     meta.className = 'detail-meta';
     const rows = [
@@ -668,9 +787,71 @@
     return;
   }
 
+  let catalogAll = [];
+  let capeCollections = null;
+  Store.loadCollections().then(function (list) {
+    capeCollections = list;
+    if (cape && document.getElementById('detailInfo')) renderInfo(Store.getProfile());
+  });
+
+  function storeVisible(c) {
+    if (!c || !c.store || c.store.subscription || Store.isStoreHidden(c)) return false;
+    const limited = Store.limitedInfo(c);
+    return !(limited && !limited.active);
+  }
+
+  function variantList() {
+    if (!cape || !cape.variantGroup) return [];
+    return catalogAll.filter(function (c) {
+        return c.variantGroup === cape.variantGroup && (c.id === cape.id || storeVisible(c));
+    });
+  }
+
+  let similarCache = null;
+  function findSimilar() {
+    if (similarCache) return similarCache;
+    const variantIds = variantList().map(function (v) { return v.id; });
+    const pool = catalogAll.filter(function (c) {
+      if (c.id === cape.id || variantIds.indexOf(c.id) !== -1 || !storeVisible(c)) return false;
+      return cape.mature === true || c.mature !== true;
+    });
+    similarCache = Promise.all([Store.capeColors(cape)].concat(pool.map(function (c) { return Store.capeColors(c); }))).then(function (results) {
+      const own = results[0] || [];
+      return pool.map(function (c, i) {
+        const colors = results[i + 1] || [];
+        let score = 0;
+        if (cape.mature === true && c.mature === true) score += 10;
+        colors.forEach(function (col) {
+            if (own.indexOf(col) === -1) return;
+            const weight = ['black', 'gray', 'white'].indexOf(col) !== -1 ? 0.5 : 1;
+            score += (own.indexOf(col) === 0 && colors.indexOf(col) === 0 ? 4 : 2) * weight;
+        });
+        if (score > 0 && Store.isPartnerCape(cape) && Store.isPartnerCape(c)) score += 1;
+        if (score > 0 && !!cape.animated === !!c.animated) score += 0.5;
+        return { cape: c, score: score, time: Store.releaseTime(c) || 0 };
+      }).filter(function (x) { return x.score > 0; }).sort(function (a, b) {
+          return b.score - a.score || b.time - a.time;
+      }).slice(0, 6).map(function (x) { return x.cape; });
+    });
+    return similarCache;
+  }
+
+  function renderSimilar(profile) {
+    findSimilar().then(function (list) {
+      const section = document.getElementById('detailSimilar');
+      const grid = document.getElementById('similarGrid');
+      grid.innerHTML = '';
+      list.forEach(function (c) {
+          grid.appendChild(Store.buildCapeCard(c, profile));
+      });
+      section.hidden = list.length === 0;
+    }).catch(function () {});
+  }
+
   Store.fetchJsonWithRetry(Store.capesJsonUrl, { cache: 'no-store' }, 2)
     .then(function (data) {
       const catalog = Array.isArray(data) ? data : [];
+      catalogAll = catalog;
       cape = catalog.find(function (c) {
           return c.id === capeId && c.store;
       }) || null;
@@ -681,7 +862,8 @@
       document.title = (cape.name || cape.id) + ' | Frost Store';
       renderInfo(Store.getProfile());
       Store.onProfile(function (profile) {
-          renderInfo(profile);
+        renderInfo(profile);
+        renderSimilar(profile);
       });
       startViewer();
     })

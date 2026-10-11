@@ -1,6 +1,85 @@
 (function () {
   const Store = window.FrostStore;
   const PAYMENT_ID_KEY = 'frostStorePaymentId';
+  const CART_ID_KEY = 'frostStoreCartId';
+  const PENDING_CART_KEY = 'frostStorePendingCart';
+  const CART_POLL_TRIES = 10;
+  const CART_POLL_MS = 3000;
+
+  function storedCartId() {
+    try {
+        return sessionStorage.getItem(CART_ID_KEY) || '';
+    } catch (e) {
+        return '';
+    }
+  }
+
+  function clearPurchasedFromCart(capes) {
+    let pending = null;
+    try {
+        pending = JSON.parse(localStorage.getItem(PENDING_CART_KEY) || 'null');
+        localStorage.removeItem(PENDING_CART_KEY);
+    } catch (e) {
+        pending = null;
+    }
+    const ids = (capes || []).map(function (c) { return c.id; }).concat(pending && Array.isArray(pending.capes) ? pending.capes : []);
+    if (ids.length) Store.removeFromCart(ids);
+    try {
+      sessionStorage.removeItem(CART_ID_KEY);
+      sessionStorage.removeItem(PAYMENT_ID_KEY);
+    } catch (e) {}
+  }
+
+  function showCartSuccess(capes) {
+    clearPurchasedFromCart(capes);
+    Store.refreshProfile();
+    const names = capes.map(function (c) { return c.name; });
+    document.getElementById('successTitle').textContent = names.length === 1 ? names[0] + ' unlocked!' : names.length + ' capes unlocked!';
+    const list = document.getElementById('successCapeList');
+    if (list && names.length > 1) {
+      list.textContent = names.join(', ');
+      list.hidden = false;
+    }
+    const first = capes[0];
+    if (first && (first.preview || first.file)) {
+      const preview = document.getElementById('successCapePreview');
+      if (first.preview) preview.classList.add('has-image');
+      preview.style.backgroundImage = 'url(' + Store.capesBase + String(first.preview || first.file).split('/').map(encodeURIComponent).join('/') + ')';
+      preview.hidden = false;
+    }
+    show('stateSuccess');
+  }
+
+  function pollCart(cartId, tries) {
+    const token = Store.loadToken();
+    if (!token) {
+      show('stateLogin');
+      return;
+    }
+    show('stateVerifying');
+    Store.botPost('/store/cart-claim', { cartId: cartId, paymentId: storedPaymentId() })
+      .then(function (data) {
+        if (data && data.ok && data.status === 'fulfilled') {
+          showCartSuccess(data.capes || []);
+          return;
+        }
+        if (data && data.error === 'token_expired') {
+          Store.clearAuth();
+          show('stateLogin');
+          return;
+        }
+        if (tries > 1) {
+          setTimeout(function () {
+              pollCart(cartId, tries - 1);
+          }, CART_POLL_MS);
+          return;
+        }
+        showError("We haven't received the payment from Whop yet. Give it a minute and try again — your capes unlock automatically once it arrives.");
+      })
+      .catch(function () {
+          showError('Network error while contacting the server. Please try again.');
+      });
+  }
   const states = ['stateVerifying', 'stateLogin', 'stateSuccess', 'stateNoPayment', 'stateError'];
 
   function show(id) {
@@ -53,6 +132,10 @@
         try {
             sessionStorage.removeItem(PAYMENT_ID_KEY);
         } catch (e) {}
+        if (data.cart) {
+          showCartSuccess(data.capes || []);
+          return;
+        }
         Store.refreshProfile();
         if (data.capeName) {
           document.getElementById('successTitle').textContent = data.capeName + ' unlocked!';
@@ -76,6 +159,10 @@
 
   document.getElementById('claimLoginBtn').addEventListener('click', function () {
     const paymentId = storedPaymentId();
+    if (storedCartId()) {
+      Store.startLogin('ty', '.k');
+      return;
+    }
     if (!paymentId) {
       show('stateNoPayment');
       return;
@@ -85,6 +172,10 @@
 
   document.getElementById('retryBtn').addEventListener('click', function () {
     const paymentId = storedPaymentId();
+    if (storedCartId()) {
+      pollCart(storedCartId(), CART_POLL_TRIES);
+      return;
+    }
     if (!paymentId) {
       show('stateNoPayment');
       return;
@@ -96,12 +187,26 @@
     const params = new URLSearchParams(window.location.search);
 
     const incomingPaymentId = params.get('payment_id') || params.get('receipt_id') || '';
+    const incomingCartId = /^[a-f0-9]{16}$/.test(params.get('cart') || '') ? params.get('cart') : '';
+    if (incomingCartId) {
+      try {
+        sessionStorage.setItem(CART_ID_KEY, incomingCartId);
+        if (incomingPaymentId) sessionStorage.setItem(PAYMENT_ID_KEY, incomingPaymentId);
+      } catch (e) {}
+      const cleanCartUrl = new URL(window.location.href);
+      ['cart', 'receipt_id', 'payment_id', 'checkout_status', 'status', 'state_id'].forEach(function (k) {
+          cleanCartUrl.searchParams.delete(k);
+      });
+      window.history.replaceState(null, '', cleanCartUrl.pathname + cleanCartUrl.search + cleanCartUrl.hash);
+      pollCart(incomingCartId, CART_POLL_TRIES);
+      return;
+    }
     if (incomingPaymentId) {
       try {
           sessionStorage.setItem(PAYMENT_ID_KEY, incomingPaymentId);
       } catch (e) {}
       const cleanUrl = new URL(window.location.href);
-      ['receipt_id', 'payment_id', 'checkout_status', 'status', 'state_id', 'cape'].forEach(function (k) {
+      ['receipt_id', 'payment_id', 'checkout_status', 'status', 'state_id', 'cape', 'cart'].forEach(function (k) {
         cleanUrl.searchParams.delete(k);
       });
       window.history.replaceState(null, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
@@ -115,7 +220,8 @@
       const pIdx = oauthReturn.state.indexOf('.p.');
       if (pIdx !== -1) paymentId = oauthReturn.state.slice(pIdx + 3);
       if (!paymentId) paymentId = storedPaymentId();
-      if (!paymentId) {
+      const cartOnly = !!storedCartId();
+      if (!paymentId && !cartOnly) {
         show('stateNoPayment');
         return;
       }
@@ -126,7 +232,8 @@
             showError('Discord sign-in failed. Please try again.', data && data.detail);
             return;
           }
-          claim(paymentId);
+          if (storedCartId()) pollCart(storedCartId(), CART_POLL_TRIES);
+          else claim(paymentId);
         })
         .catch(function () {
             showError('Network error during sign-in. Please try again.');
@@ -134,6 +241,10 @@
       return;
     }
 
+    if (storedCartId()) {
+      pollCart(storedCartId(), CART_POLL_TRIES);
+      return;
+    }
     const cached = storedPaymentId();
     if (cached) {
       claim(cached);

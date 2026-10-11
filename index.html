@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Store | Frost</title>
+<title>Frost Store</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#000000">
 <meta name="robots" content="noindex, follow">
 <meta name="keywords" content="FrostClient Store, Frost Store, Frost Client Store"> 
-<meta name="desciption" content="FrostClient Store | Browse & Purchase Capes">
+<meta name="description" content="FrostClient Store | FrostClient Lite and capes">
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="store.css">
 </head>
-<body>
+<body data-page="home">
 
 <div class="topo-bg">
   <svg viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
@@ -32,8 +32,10 @@
   <div class="nav-inner">
     <a class="nav-logo" href="/"><img src="favicon.ico" alt="" class="nav-logo-icon"/><span>FROST</span> <span class="nav-logo-store">STORE</span></a>
     <ul class="nav-links">
-      <li><a href="." class="active">Capes</a></li>
-      <li><a href="https://frostclient.eu/lite">Lite</a></li>
+      <li><a href="/" class="active">Home</a></li>
+      <li><a href="/lite">Lite</a></li>
+      <li><a href="/capes">Capes</a></li>
+      <li><a href="/collections">Collections</a></li>
     </ul>
     <div class="nav-actions">
       <button type="button" class="nav-signin-btn" id="navSigninBtn"><span>Sign in</span></button>
@@ -43,42 +45,33 @@
 </nav>
 
 <main class="store-page">
-  <header class="store-head">
-    <div class="store-eyebrow">FrostClient Store</div>
-    <h1 class="store-title">Capes</h1>
-    <p class="store-sub">Stand out on every server. Capes you unlock here follow your Minecraft account across all FrostClient versions.</p>
-    <div class="store-controls">
-      <input type="search" class="store-search" id="storeSearch" placeholder="Search capes..." autocomplete="off"/>
-      <select class="store-sort" id="storeSort" aria-label="Sort capes">
-        <option value="newest">Newest first</option>
-        <option value="oldest">Oldest first</option>
-        <option value="price-asc">Price: Low to High</option>
-        <option value="price-desc">Price: High to Low</option>
-      </select>
+  <section class="home-collection" id="homeCollection" hidden aria-labelledby="featuredTitle">
+    <div class="home-section-head">
+      <h2 class="home-section-title" id="featuredTitle">Featured</h2>
     </div>
-  </header>
-
-  <div class="lite-teaser" id="liteTeaser">
-    <div class="lite-teaser-eyebrow">Exclusive to FrostClient Lite</div>
-    <div class="cape-grid" id="liteTeaserGrid">
-      <div class="cape-card skeleton">
-          <div class="cape-card-preview-wrap">
-              <div class="skeleton-shimmer sk-preview"></div>
-          </div>
-          <div class="skeleton-shimmer sk-name"></div>
-          <div class="skeleton-shimmer sk-pill"></div>
+    <div class="featured-card">
+      <div class="featured-viewport">
+        <div class="featured-track"></div>
       </div>
-      <div class="cape-card skeleton">
-          <div class="cape-card-preview-wrap">
-              <div class="skeleton-shimmer sk-preview"></div>
-          </div>
-          <div class="skeleton-shimmer sk-name"></div>
-          <div class="skeleton-shimmer sk-pill"></div>
+      <a class="featured-panel" href="/collections">
+        <span class="featured-panel-info">
+          <span class="home-collection-name"></span>
+          <span class="home-collection-deal" hidden></span>
+        </span>
+        <span class="home-collection-cta">View collection →</span>
+      </a>
+      <div class="featured-dots" hidden></div>
+      <div class="featured-line" hidden><span class="featured-line-fill"></span></div>
+    </div>
+  </section>
+  <section class="home-capes">
+    <div class="home-section-head">
+      <div>
+        <div class="store-eyebrow">Capes</div>
+        <h2 class="home-section-title">New in the store</h2>
       </div>
     </div>
-  </div>
-
-  <div class="cape-grid" id="capeGrid">
+    <div class="cape-grid" id="homeCapeGrid">
     <div class="cape-card skeleton">
         <div class="cape-card-preview-wrap">
             <div class="skeleton-shimmer sk-preview"></div>
@@ -121,7 +114,51 @@
         <div class="skeleton-shimmer sk-name"></div>
         <div class="skeleton-shimmer sk-pill"></div>
     </div>
-  </div>
+    <div class="cape-card skeleton">
+        <div class="cape-card-preview-wrap">
+            <div class="skeleton-shimmer sk-preview"></div>
+        </div>
+        <div class="skeleton-shimmer sk-name"></div>
+        <div class="skeleton-shimmer sk-pill"></div>
+    </div>
+    <div class="cape-card skeleton">
+        <div class="cape-card-preview-wrap">
+            <div class="skeleton-shimmer sk-preview"></div>
+        </div>
+        <div class="skeleton-shimmer sk-name"></div>
+        <div class="skeleton-shimmer sk-pill"></div>
+    </div>
+    <div class="cape-card skeleton">
+        <div class="cape-card-preview-wrap">
+            <div class="skeleton-shimmer sk-preview"></div>
+        </div>
+        <div class="skeleton-shimmer sk-name"></div>
+        <div class="skeleton-shimmer sk-pill"></div>
+    </div>
+    <div class="cape-card skeleton">
+        <div class="cape-card-preview-wrap">
+            <div class="skeleton-shimmer sk-preview"></div>
+        </div>
+        <div class="skeleton-shimmer sk-name"></div>
+        <div class="skeleton-shimmer sk-pill"></div>
+    </div>
+    <div class="cape-card skeleton">
+        <div class="cape-card-preview-wrap">
+            <div class="skeleton-shimmer sk-preview"></div>
+        </div>
+        <div class="skeleton-shimmer sk-name"></div>
+        <div class="skeleton-shimmer sk-pill"></div>
+    </div>
+    <div class="cape-card skeleton">
+        <div class="cape-card-preview-wrap">
+            <div class="skeleton-shimmer sk-preview"></div>
+        </div>
+        <div class="skeleton-shimmer sk-name"></div>
+        <div class="skeleton-shimmer sk-pill"></div>
+    </div>
+    </div>
+    <a class="home-capes-more" href="/capes">View all capes →</a>
+  </section>
 </main>
 
 <footer>
@@ -132,8 +169,8 @@
     </div>
     <div class="footer-col">
       <h4>Store</h4>
-      <a href=".">Cape Catalog</a>
-      <a href="https://frostclient.eu/lite">Frost Lite</a>
+      <a href="/capes">Cape Catalog</a>
+      <a href="/lite">Frost Lite</a>
       <a href="https://frostclient.eu">Main Website</a>
       <a href="https://frostclient.eu/?openDownload">Download Frost</a>
     </div>
