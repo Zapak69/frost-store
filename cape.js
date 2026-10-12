@@ -665,11 +665,41 @@
     }
   }
 
+  let backMode = 'cape';
+
+  function applyBackMode(viewer) {
+      if (viewer && viewer.playerObject) viewer.playerObject.backEquipment = backMode;
+  }
+
   function applyCape(viewer, source) {
     try {
-      const result = viewer.loadCape(source);
+      const result = viewer.loadCape(source, { backEquipment: backMode });
       if (result && result.catch) result.catch(function () {});
     } catch (err) {}
+  }
+
+  function buildElytraToggle(viewer) {
+    if (!cape || cape.elytra !== true || document.getElementById('previewElytraBtn')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'previewElytraBtn';
+    btn.className = 'preview-elytra-toggle';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6v13"/><path d="M12 7C9.5 4.5 5.5 3.5 2.5 4.5c0 4 1.5 7 4 9-.5 1.5-.5 3 .5 4.5 2.5-.5 4-2 5-4"/><path d="M12 7c2.500-2.5 6.5-3.5 9.5-2.5 0 4-1.500 7-4 9 .5 1.500.5 3-.5 4.500-2.500-.5-4-2-5-4"/></svg>';
+    const paint = function () {
+      const on = backMode === 'elytra';
+      btn.classList.toggle('is-on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.setAttribute('aria-label', on ? 'Show the cape' : 'Show the elytra');
+      btn.title = on ? 'Show cape' : 'Show elytra';
+    };
+    btn.addEventListener('click', function () {
+      backMode = backMode === 'elytra' ? 'cape' : 'elytra';
+      applyBackMode(viewer);
+      paint();
+    });
+    paint();
+    previewPanel.classList.add('has-elytra-toggle');
+    previewPanel.appendChild(btn);
   }
 
   function playCapeAnimation(viewer) {
@@ -768,6 +798,7 @@
       if (hint) hint.hidden = false;
       skinMenuWrap.hidden = false;
       updateSkinMenuState();
+      buildElytraToggle(viewer);
       startCapeAnimation(viewer);
     }).catch(function () {
       viewerStarted = false;
