@@ -1545,7 +1545,7 @@
   const panelCta = panel.querySelector('.home-collection-cta');
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let collections = null;
-  let liteShown = null;
+  let built = false;
   let items = [];
   let slides = [];
   let dots = [];
@@ -1718,11 +1718,9 @@
 
   function build() {
     if (!collections) return;
-    const profile = Store.getProfile();
-    const withLite = !(profile && profile.liteActive);
-    if (withLite === liteShown) return;
-    liteShown = withLite;
-    items = (withLite ? [LITE_ITEM] : []).concat(collections.map(itemFromCollection));
+    if (built) return;
+    built = true;
+    items = [LITE_ITEM].concat(collections.map(itemFromCollection));
     track.innerHTML = '';
     dotsWrap.innerHTML = '';
     track.style.transition = 'none';
@@ -1778,6 +1776,10 @@
 
   Store.loadCollections().then(function (list) {
     collections = list.filter(function (col) { return Store.collectionActive(col) && col.featured === true; }).sort(function (a, b) {
+      const la = a.limitedUntil ? new Date(a.limitedUntil).getTime() : 0;
+      const lb = b.limitedUntil ? new Date(b.limitedUntil).getTime() : 0;
+      if (!!la !== !!lb) return la ? -1 : 1;
+      if (la && lb && la !== lb) return la - lb;
       const ta = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
       const tb = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
       return tb - ta || list.indexOf(b) - list.indexOf(a);
