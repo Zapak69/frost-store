@@ -7,6 +7,10 @@
   ]).then(function (res) {
     const catalog = Array.isArray(res[1]) ? res[1] : [];
     const list = res[0].filter(Store.collectionActive).sort(function (a, b) {
+      const la = a.limitedUntil ? new Date(a.limitedUntil).getTime() : 0;
+      const lb = b.limitedUntil ? new Date(b.limitedUntil).getTime() : 0;
+      if (!!la !== !!lb) return la ? -1 : 1;
+      if (la && lb && la !== lb) return la - lb;
       const ta = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
       const tb = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
       return tb - ta || res[0].indexOf(b) - res[0].indexOf(a);
