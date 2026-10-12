@@ -207,7 +207,8 @@
     const sum = capes.reduce(function (t, c) { return t + Number(c.store.price); }, 0);
     const fullSum = col.capes.map(function (id) { return catalog.find(function (c) { return c.id === id; }); })
       .filter(purchasable).reduce(function (t, c) { return t + Number(c.store.price); }, 0);
-    const rate = capes.length >= 2 && Store.collectionActive(col) ? Store.bundleRate(col, fullSum) : 0;
+    const paidCount = col.capes.map(function (id) { return catalog.find(function (c) { return c.id === id; }); }).filter(purchasable).length;
+    const rate = capes.length >= 1 && paidCount >= 2 && Store.collectionActive(col) ? Store.bundleRate(col, fullSum) : 0;
     return Math.round(sum * rate * 100) / 100;
   }
 

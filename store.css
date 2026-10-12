@@ -2505,6 +2505,21 @@ footer {
 .collection-limited--lg {
   top: 16px; left: 16px; font-size: 12.5px; padding: 6px 14px;
 }
+.collection-owned {
+  position: absolute; top: 16px; right: 16px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: 0.4px;
+  color: #06121c; background: var(--green); border-radius: 980px; padding: 6px 14px;
+  box-shadow: 0 6px 20px -6px rgba(48,209,88,0.55);
+}
+.collection-card-owned {
+  color: var(--green); font-weight: 600;
+}
+.bundle-box[hidden] {
+  display: none;
+}
+.collection-content.is-owned {
+  grid-template-columns: minmax(0, 1fr);
+}
 .collection-grid {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px; margin-top: 34px;
@@ -2592,7 +2607,7 @@ footer {
 }
 .bundle-badge {
   font-size: 12px; font-weight: 700; color: #06121c; background: var(--green);
-  border-radius: 980px; padding: 3px 9px;
+  border-radius: 980px; padding: 3px 9px; margin-left: auto; align-self: center; white-space: nowrap;
 }
 .bundle-note {
   font-size: 13px; line-height: 1.5; color: var(--muted); margin: 0 0 18px;
@@ -2644,6 +2659,9 @@ footer {
   }
   .collection-limited--lg {
     top: 10px; left: 10px; font-size: 11px; padding: 4px 10px;
+  }
+  .collection-owned {
+    top: 10px; right: 10px; font-size: 11px; padding: 4px 10px;
   }
   .home-collection-cta {
     margin-left: 0; width: 100%;
@@ -2933,4 +2951,10 @@ footer {
 }
 .detail-preview-panel.has-elytra-toggle .preview-anim-toggle {
   right: 60px;
+}
+.bundle-badge--lite {
+  color: #1a0a1f; background: linear-gradient(100deg, #ff73fa, #b845ff);
+}
+.bundle-badge--annual {
+  color: #1a1400; background: linear-gradient(100deg, #ffd60a, #ffb800);
 }

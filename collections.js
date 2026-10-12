@@ -11,13 +11,15 @@
       const tb = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
       return tb - ta || res[0].indexOf(b) - res[0].indexOf(a);
     });
-    grid.innerHTML = '';
-    if (!list.length) {
-      grid.innerHTML = '<div class="store-empty">No collections right now. Check back soon.</div>';
-      return;
-    }
-    list.forEach(function (col) {
-        grid.appendChild(Store.buildCollectionCard(col, catalog));
+    Store.onProfile(function (profile) {
+      grid.innerHTML = '';
+      if (!list.length) {
+        grid.innerHTML = '<div class="store-empty">No collections right now. Check back soon.</div>';
+        return;
+      }
+      list.forEach(function (col) {
+          grid.appendChild(Store.buildCollectionCard(col, catalog, profile));
+      });
     });
   });
 })();

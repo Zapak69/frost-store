@@ -639,7 +639,8 @@
         }, 0);
         const fullSum = col.capes.map(function (id) { return cartPopCatalog.find(function (c) { return c && c.id === id; }); })
           .filter(isCartable).reduce(function (t, c) { return t + Number(c.store.price); }, 0);
-        const rate = capes.length >= 2 && collectionActive(col) ? bundleRate(col, fullSum) : 0;
+        const paidCount = col.capes.map(function (id) { return cartPopCatalog.find(function (c) { return c && c.id === id; }); }).filter(isCartable).length;
+        const rate = capes.length >= 1 && paidCount >= 2 && collectionActive(col) ? bundleRate(col, fullSum) : 0;
         const price = Math.round(memberSum * (1 - rate) * 100) / 100;
         const tile = document.createElement('div');
         tile.className = 'cart-pop-thumb cart-pop-thumb--bundle';
@@ -1017,7 +1018,7 @@
     return col && col.banner ? CAPES_BASE + String(col.banner).split('/').map(encodeURIComponent).join('/') : null;
   }
 
-  function buildCollectionCard(col, catalog) {
+  function buildCollectionCard(col, catalog, profile) {
     const card = document.createElement('a');
     card.className = 'collection-card';
     card.href = 'collection?id=' + encodeURIComponent(col.id);
@@ -1051,7 +1052,24 @@
     const capes = col.capes.map(function (id) { return (catalog || []).find(function (c) { return c.id === id; }); }).filter(Boolean);
     const meta = document.createElement('div');
     meta.className = 'collection-card-meta';
-    meta.textContent = capes.length + (capes.length === 1 ? ' cape' : ' capes') + (bundleLabel(col) ? ' · ' + bundleLabel(col) : '');
+    const paid = capes.filter(isCartable);
+    const left = paid.filter(function (c) { return !isOwned(c, profile); });
+    const ownedPaid = paid.length - left.length;
+    if (profile && capes.length && capes.every(function (c) { return isOwned(c, profile); })) {
+      meta.textContent = capes.length + (capes.length === 1 ? ' cape' : ' capes') + ' · ';
+      const owned = document.createElement('span');
+      owned.className = 'collection-card-owned';
+      owned.textContent = 'Owned';
+      meta.appendChild(owned);
+    } else if (profile && ownedPaid > 0 && left.length > 0) {
+      const fullSum = paid.reduce(function (t, c) { return t + Number(c.store.price); }, 0);
+      const leftSum = left.reduce(function (t, c) { return t + Number(c.store.price); }, 0);
+      const rate = paid.length >= 2 ? bundleRate(col, fullSum) : 0;
+      const price = Math.round((leftSum - Math.round(leftSum * rate * 100) / 100) * 100) / 100;
+      meta.textContent = 'You own ' + ownedPaid + ' of ' + paid.length + ' · complete for €' + price.toFixed(2);
+    } else {
+      meta.textContent = capes.length + (capes.length === 1 ? ' cape' : ' capes') + (bundleLabel(col) ? ' · ' + bundleLabel(col) : '');
+    }
     text.appendChild(meta);
     body.appendChild(text);
     const thumbs = document.createElement('div');

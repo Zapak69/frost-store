@@ -73,21 +73,28 @@
     const free = capes.filter(function (c) { return !Store.isCartable(c) && c.store && !c.store.subscription && Number(c.store.price) === 0 && !Store.isOwned(c, profile); });
     const ownedAll = capes.length > 0 && capes.every(function (c) { return Store.isOwned(c, profile); });
     box.innerHTML = '';
-    box.hidden = false;
-    const title = document.createElement('div');
-    title.className = 'bundle-title';
-    title.textContent = ownedAll ? 'You own this collection' : 'Get the collection';
-    box.appendChild(title);
+    box.hidden = ownedAll;
+    box.parentElement.classList.toggle('is-owned', ownedAll);
+    const oldBadge = hero.querySelector('.collection-owned');
+    if (oldBadge) oldBadge.remove();
     if (ownedAll) {
-      const note = document.createElement('p');
-      note.className = 'bundle-note';
-      note.textContent = 'Every cape in this collection is already yours. Equip them in the FrostClient launcher.';
-      box.appendChild(note);
+      const badge = document.createElement('span');
+      badge.className = 'collection-owned';
+      badge.textContent = 'Owned';
+      hero.appendChild(badge);
       return;
     }
+    const title = document.createElement('div');
+    title.className = 'bundle-title';
+    title.textContent = 'Get the collection';
+    box.appendChild(title);
     const sum = Math.round(missing.reduce(function (s, c) { return s + Number(c.store.price); }, 0) * 100) / 100;
-    const applies = rate > 0 && missing.length >= 2 && paid.length >= 2;
-    const total = applies ? Math.round((sum - Math.round(sum * rate * 100) / 100) * 100) / 100 : sum;
+    const applies = rate > 0 && missing.length >= 1 && paid.length >= 2;
+    const ownedPaid = paid.length - missing.length;
+    const afterBundle = applies ? Math.round((sum - Math.round(sum * rate * 100) / 100) * 100) / 100 : sum;
+    const litePct = profile && profile.liteActive ? Number(profile.liteDiscountPercent) || 0 : 0;
+    const total = litePct ? Math.round(afterBundle * (1 - litePct / 100) * 100) / 100 : afterBundle;
+    const liteCls = litePct >= 10 ? ' bundle-badge--annual' : ' bundle-badge--lite';
     if (missing.length) {
       const priceRow = document.createElement('div');
       priceRow.className = 'bundle-price';
@@ -95,20 +102,21 @@
       now.className = 'bundle-price-now';
       now.textContent = money(total);
       priceRow.appendChild(now);
-      if (applies) {
+      if (applies || litePct) {
         const was = document.createElement('s');
         was.className = 'bundle-price-was';
         was.textContent = money(sum);
         priceRow.appendChild(was);
         const badge = document.createElement('span');
-        badge.className = 'bundle-badge';
-        badge.textContent = '−' + Math.round(rate * 100) + '%';
+        badge.className = 'bundle-badge' + (litePct ? liteCls : '');
+        badge.textContent = '−' + ((applies ? Math.round(rate * 100) : 0) + litePct) + '%' + (litePct ? ' Lite' : '');
+        badge.title = litePct ? 'Your FrostClient Lite discount is already included' : '';
         priceRow.appendChild(badge);
       }
       box.appendChild(priceRow);
       const sub = document.createElement('p');
       sub.className = 'bundle-note';
-      sub.textContent = missing.length + (missing.length === 1 ? ' cape' : ' capes') + (missing.length < paid.length ? ' you don’t own yet' : '') + (applies ? ' · you save ' + money(sum - total) : '') + (profile && profile.liteDiscountPercent ? ' · your Lite discount is added in the cart' : '');
+      sub.textContent = (ownedPaid > 0 ? 'You own ' + ownedPaid + ' of ' + paid.length + ' · ' + missing.length + (missing.length === 1 ? ' cape' : ' capes') + ' left' : missing.length + (missing.length === 1 ? ' cape' : ' capes')) + (total < sum ? ' · you save ' + money(sum - total) : '');
       box.appendChild(sub);
       const allIn = Store.getCartBundles().some(function (b) {
           return b.id === col.id && missing.every(function (c) { return b.capes.indexOf(c.id) !== -1; });
@@ -120,7 +128,7 @@
         btn.textContent = 'View cart →';
       } else {
         btn.type = 'button';
-        btn.textContent = missing.length === 1 ? 'Add to cart' : 'Add collection to cart';
+        btn.textContent = ownedPaid > 0 ? 'Complete the collection' : 'Add collection to cart';
         btn.addEventListener('click', function () {
           const ids = missing.map(function (c) { return c.id; });
           if (!Store.addBundleToCart(col.id, ids)) {
@@ -136,12 +144,6 @@
       codeNote.className = 'bundle-hint';
       codeNote.textContent = 'Discount codes don\u2019t apply to collections.';
       box.appendChild(codeNote);
-      if (rate > 0 && !applies) {
-        const hint = document.createElement('p');
-        hint.className = 'bundle-hint';
-        hint.textContent = 'The bundle discount applies when at least two capes from the collection are left to buy.';
-        box.appendChild(hint);
-      }
     }
     if (free.length) {
       const freeNote = document.createElement('p');
