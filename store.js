@@ -37,7 +37,7 @@
 })();
 
 (function () {
-  const STORE_API_URL = 'https://script.google.com/macros/s/AKfycbxF57u1UNBsonktp5_2EseJtFkBZR0-CCxyazOGVUmEBrcwjU1-t6Us41gcrRqCsGcR/exec';
+  const STORE_API_URL = 'https://bot.frostclient.eu/sheets';
   const CAPES_JSON_URL = 'https://bot.frostclient.eu/launcher/capes/capes.json';
   const COLLECTIONS_JSON_URL = 'https://bot.frostclient.eu/launcher/capes/collections.json';
   const CAPES_BASE = 'https://bot.frostclient.eu/launcher/capes/';
