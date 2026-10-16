@@ -15,11 +15,11 @@
   let limitedClaimedFlash = false;
   let limitedJustClaimed = false;
   const LIMITED_ERROR_TEXT = {
-    not_signed_in: 'Your session expired. Sign in again to claim this cape.',
-    expired: 'This limited cape is no longer available.',
+    not_signed_in: 'Your session expired. Sign in again to claim this cloak.',
+    expired: 'This limited cloak is no longer available.',
     rate_limited: 'Too many attempts. Wait a minute and try again.',
-    grant_failed: 'The cape could not be added to your account right now. Try again in a moment.',
-    not_found: 'This cape is not available to claim.'
+    grant_failed: 'The cloak could not be added to your account right now. Try again in a moment.',
+    not_found: 'This cloak is not available to claim.'
   };
   const CLAIM_CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 
@@ -276,7 +276,7 @@
       done.disabled = true;
       done.innerHTML = CLAIM_CHECK_ICON + '<span>Claimed</span>';
       wrap.appendChild(done);
-      note('Claimed. The cape is now in your account and in the Frost Client Launcher.');
+      note('Claimed. The cloak is now in your account and in the Frost Client Launcher.');
       return wrap;
     }
     if (!limited.active) {
@@ -286,7 +286,7 @@
       btn.disabled = true;
       btn.textContent = 'No longer available';
       wrap.appendChild(btn);
-      note('This limited cape could be claimed until ' + formatDateTime(limited.until) + '.');
+      note('This limited cloak could be claimed until ' + formatDateTime(limited.until) + '.');
       return wrap;
     }
     const btn = document.createElement('button');
@@ -298,7 +298,7 @@
           Store.startLogin('store', '.c.' + cape.id);
       });
       wrap.appendChild(btn);
-      note('Sign in with Discord so the cape can be added to your account.');
+      note('Sign in with Discord so the cloak can be added to your account.');
       return wrap;
     }
     if (limitedClaiming) {
@@ -350,7 +350,7 @@
         Store.showToast('Your cart is full (' + Store.cartMax + ' items). Check out first.');
         return;
       }
-      if (Store.getLitePlan()) Store.showToast('Added to Saved for later. Capes are checked out separately from FrostClient Lite.');
+      if (Store.getLitePlan()) Store.showToast('Added to Saved for later. Cloaks are checked out separately from FrostClient Lite.');
       paint();
     });
     Store.onCart(paint);
@@ -381,7 +381,7 @@
       wrap.appendChild(btn);
       const note = document.createElement('div');
       note.className = 'detail-cta-note';
-      note.textContent = 'Opens the Frost Client Launcher and equips this cape for you.';
+      note.textContent = 'Opens the Frost Client Launcher and equips this cloak for you.';
       wrap.appendChild(note);
       return wrap;
     }
@@ -396,8 +396,8 @@
       const note = document.createElement('div');
       note.className = 'detail-cta-note';
       note.textContent = isAnnual
-        ? "This cape is exclusive to the Annual Lite plan — the monthly plan doesn't include it."
-        : 'This cape is included with every FrostClient Lite subscription.';
+        ? "This cloak is exclusive to the Annual Lite plan — the monthly plan doesn't include it."
+        : 'This cloak is included with every FrostClient Lite subscription.';
       wrap.appendChild(note);
       return wrap;
     }
@@ -410,7 +410,7 @@
       wrap.appendChild(btn);
       const note = document.createElement('div');
       note.className = 'detail-cta-note';
-      note.textContent = 'Free cape — no purchase needed.';
+      note.textContent = 'Free cloak — no purchase needed.';
       wrap.appendChild(note);
       return wrap;
     }
@@ -442,7 +442,7 @@
               Store.startLogin('store');
               return;
             }
-            Store.showToast(data && data.error === 'empty_cart' ? 'You already own this cape.' : "Checkout couldn't start. Please try again in a moment.");
+            Store.showToast(data && data.error === 'empty_cart' ? 'You already own this cloak.' : "Checkout couldn't start. Please try again in a moment.");
           }).catch(function () {
             btn.disabled = false;
             btn.classList.remove('is-loading');
@@ -462,8 +462,8 @@
       const note = document.createElement('div');
       note.className = 'detail-cta-note';
       note.textContent = loggedIn
-        ? 'Checkout is handled securely by Whop. The cape unlocks right after your purchase.'
-        : 'Sign in with Discord first so the cape can be linked to your account.';
+        ? 'Checkout is handled securely by Whop. The cloak unlocks right after your purchase.'
+        : 'Sign in with Discord first so the cloak can be linked to your account.';
       wrap.appendChild(note);
       return wrap;
     }
@@ -550,7 +550,7 @@
       variants.forEach(function (v) {
         const a = document.createElement('a');
         a.className = 'detail-variant' + (v.id === cape.id ? ' is-current' : '');
-        a.href = '/cape?id=' + encodeURIComponent(v.id);
+        a.href = '/cloak?id=' + encodeURIComponent(v.id);
         a.title = v.name || v.id;
         a.setAttribute('aria-label', (v.name || v.id) + (v.id === cape.id ? ' (selected)' : ''));
         if (v.id === cape.id) a.setAttribute('aria-current', 'page');
@@ -689,8 +689,8 @@
       const on = backMode === 'elytra';
       btn.classList.toggle('is-on', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      btn.setAttribute('aria-label', on ? 'Show the cape' : 'Show the elytra');
-      btn.title = on ? 'Show cape' : 'Show elytra';
+      btn.setAttribute('aria-label', on ? 'Show the cloak' : 'Show the elytra');
+      btn.title = on ? 'Show cloak' : 'Show elytra';
     };
     btn.addEventListener('click', function () {
       backMode = backMode === 'elytra' ? 'cape' : 'elytra';

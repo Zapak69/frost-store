@@ -34,7 +34,7 @@
     clearPurchasedFromCart(capes);
     Store.refreshProfile();
     const names = capes.map(function (c) { return c.name; });
-    document.getElementById('successTitle').textContent = names.length === 1 ? names[0] + ' unlocked!' : names.length + ' capes unlocked!';
+    document.getElementById('successTitle').textContent = names.length === 1 ? names[0] + ' unlocked!' : names.length + ' cloaks unlocked!';
     const list = document.getElementById('successCapeList');
     if (list && names.length > 1) {
       list.textContent = names.join(', ');
@@ -74,7 +74,7 @@
           }, CART_POLL_MS);
           return;
         }
-        showError("We haven't received the payment from Whop yet. Give it a minute and try again — your capes unlock automatically once it arrives.");
+        showError("We haven't received the payment from Whop yet. Give it a minute and try again — your cloaks unlock automatically once it arrives.");
       })
       .catch(function () {
           showError('Network error while contacting the server. Please try again.');
@@ -122,7 +122,7 @@
             store_not_configured: 'The store is not accepting purchases yet. Please contact support on Discord.',
             payment_not_found: "We couldn't find that purchase. Please try again or contact support.",
             payment_not_paid: 'This purchase is not marked as paid yet. Try again in a minute.',
-            unknown_product: "This purchase doesn't match any cape in the store. Please contact support.",
+            unknown_product: "This purchase doesn't match any cloak in the store. Please contact support.",
             already_claimed: 'This purchase was already claimed by a different Discord account.',
             whop_error: 'Whop could not be reached. Please try again.'
           };

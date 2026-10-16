@@ -116,7 +116,7 @@
       box.appendChild(priceRow);
       const sub = document.createElement('p');
       sub.className = 'bundle-note';
-      sub.textContent = (ownedPaid > 0 ? 'You own ' + ownedPaid + ' of ' + paid.length + ' · ' + missing.length + (missing.length === 1 ? ' cape' : ' capes') + ' left' : missing.length + (missing.length === 1 ? ' cape' : ' capes')) + (total < sum ? ' · you save ' + money(sum - total) : '');
+      sub.textContent = (ownedPaid > 0 ? 'You own ' + ownedPaid + ' of ' + paid.length + ' · ' + missing.length + (missing.length === 1 ? ' cloak' : ' cloaks') + ' left' : missing.length + (missing.length === 1 ? ' cloak' : ' cloaks')) + (total < sum ? ' · you save ' + money(sum - total) : '');
       box.appendChild(sub);
       const allIn = Store.getCartBundles().some(function (b) {
           return b.id === col.id && missing.every(function (c) { return b.capes.indexOf(c.id) !== -1; });
@@ -148,7 +148,7 @@
     if (free.length) {
       const freeNote = document.createElement('p');
       freeNote.className = 'bundle-hint';
-      freeNote.textContent = free.length === 1 ? (free[0].name || free[0].id) + ' is free — claim it on its own page.' : free.length + ' capes in this collection are free — claim them on their own pages.';
+      freeNote.textContent = free.length === 1 ? (free[0].name || free[0].id) + ' is free — claim it on its own page.' : free.length + ' cloaks in this collection are free — claim them on their own pages.';
       box.appendChild(freeNote);
     }
   }
@@ -167,7 +167,7 @@
       }
       capesGrid.appendChild(card);
     });
-    document.getElementById('collectionCapesTitle').textContent = capes.length === 1 ? '1 cape in this collection' : capes.length + ' capes in this collection';
+    document.getElementById('collectionCapesTitle').textContent = capes.length === 1 ? '1 cloak in this collection' : capes.length + ' cloaks in this collection';
     capesSection.hidden = false;
   }
 

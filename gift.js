@@ -23,12 +23,12 @@
 
   const ERROR_TEXT = {
     not_signed_in: 'Your session expired. Sign in again to claim this gift.',
-    already_owned: 'You already own this cape.',
+    already_owned: 'You already own this cloak.',
     expired: 'This gift has expired.',
     full: 'All gifts from this link have already been claimed.',
     revoked: 'This gift is no longer available.',
     rate_limited: 'Too many attempts. Wait a minute and try again.',
-    grant_failed: 'The cape could not be added to your account right now. Try again in a moment.',
+    grant_failed: 'The cloak could not be added to your account right now. Try again in a moment.',
     not_found: 'This gift link is invalid.'
   };
 
@@ -85,7 +85,7 @@
       done.disabled = true;
       done.innerHTML = CHECK_ICON + '<span>Claimed</span>';
       wrap.appendChild(done);
-      wrap.appendChild(note('Gift claimed. The cape is now in your account and in the Frost Client Launcher.'));
+      wrap.appendChild(note('Gift claimed. The cloak is now in your account and in the Frost Client Launcher.'));
       return wrap;
     }
     if (loggedIn && ownsCape(profile)) {
@@ -95,8 +95,8 @@
       btn.textContent = 'Equip';
       wrap.appendChild(btn);
       wrap.appendChild(note(justClaimed || gift.claimed
-        ? 'Gift claimed. The cape is now in your account and in the Frost Client Launcher.'
-        : 'You already own this cape. Equip opens the Frost Client Launcher.'));
+        ? 'Gift claimed. The cloak is now in your account and in the Frost Client Launcher.'
+        : 'You already own this cloak. Equip opens the Frost Client Launcher.'));
       return wrap;
     }
     if (gift.status === 'expired') {
@@ -120,7 +120,7 @@
           Store.startLogin('store', '.g.' + code);
       });
       wrap.appendChild(btn);
-      wrap.appendChild(note('Sign in with Discord so the cape can be added to your account.'));
+      wrap.appendChild(note('Sign in with Discord so the cloak can be added to your account.'));
       return wrap;
     }
     if (claiming) {
@@ -134,7 +134,7 @@
     btn.addEventListener('click', claim);
     wrap.appendChild(btn);
     if (claimError) wrap.appendChild(note(claimError, true));
-    else wrap.appendChild(note('The cape is added to your account right away.'));
+    else wrap.appendChild(note('The cloak is added to your account right away.'));
     return wrap;
   }
 

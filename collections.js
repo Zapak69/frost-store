@@ -13,7 +13,7 @@
       if (la && lb && la !== lb) return la - lb;
       const ta = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
       const tb = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
-      return tb - ta || res[0].indexOf(b) - res[0].indexOf(a);
+      return ta - tb || res[0].indexOf(a) - res[0].indexOf(b);
     });
     Store.onProfile(function (profile) {
       grid.innerHTML = '';

@@ -11,9 +11,9 @@
   const PROMO_KEY = 'frostStoreCartPromo';
   const ERRORS = {
     empty_cart: 'Your cart is empty.',
-    too_many_items: 'Too many capes in one order. Remove a few and try again.',
+    too_many_items: 'Too many cloaks in one order. Remove a few and try again.',
     invalid_promo: "That discount code isn't valid.",
-    invalid_total: "This order can't be checked out. Remove the discount code or add another cape.",
+    invalid_total: "This order can't be checked out. Remove the discount code or add another cloak.",
     whop_error: "Whop couldn't start the checkout. Please try again in a moment.",
     token_expired: 'Your session expired. Please sign in again.'
   };
@@ -88,7 +88,7 @@
 
   function capeDisplayName(cape) {
     const baseName = String(cape.name || cape.id);
-    return /\bcape$/i.test(baseName) ? baseName : baseName + ' - Cape';
+    return /\b(cape|cloak)$/i.test(baseName) ? baseName : baseName + ' - Cloak';
   }
 
   function buildRow(opts) {
@@ -171,7 +171,7 @@
         name: capeDisplayName(cape),
         price: 'Free',
         priceCls: 'cart-item-price--free',
-        href: '/cape?id=' + encodeURIComponent(cape.id)
+        href: '/cloak?id=' + encodeURIComponent(cape.id)
       }));
     });
   }
@@ -184,7 +184,7 @@
       name: capeDisplayName(cape),
       price: money(Store.memberPrice(cape) ? Store.memberPrice(cape).price : cape.store.price),
       oldPrice: sale ? money(sale.original) : (Store.memberPrice(cape) ? money(cape.store.price) : ''),
-      href: '/cape?id=' + encodeURIComponent(cape.id),
+      href: '/cloak?id=' + encodeURIComponent(cape.id),
       actions: [removeButton('Remove ' + (cape.name || cape.id), function () {
         Store.removeFromCart(cape.id);
         quote = null;
@@ -235,7 +235,7 @@
       cls: 'cart-item--bundle' + (saved ? ' cart-item--saved' : ''),
       thumb: bundleThumb(col, capes),
       name: (col.name || col.id) + ' - Collection',
-      sub: capes.length + (capes.length === 1 ? ' cape: ' : ' capes: ') + capes.slice(0, 4).map(function (c) { return c.name || c.id; }).join(', ') + (capes.length > 4 ? ' +' + (capes.length - 4) + ' more' : ''),
+      sub: capes.length + (capes.length === 1 ? ' cloak: ' : ' cloaks: ') + capes.slice(0, 4).map(function (c) { return c.name || c.id; }).join(', ') + (capes.length > 4 ? ' +' + (capes.length - 4) + ' more' : ''),
       price: money(price),
       oldPrice: price < sum ? money(sum) : '',
       href: '/collection?id=' + encodeURIComponent(col.id),
@@ -271,7 +271,7 @@
         saved.className = 'cart-saved';
         const note = document.createElement('div');
         note.className = 'cart-saved-note';
-        note.textContent = 'Saved for later · capes can\'t be bought together with Lite. They come back once you check out or remove Lite.';
+        note.textContent = 'Saved for later · cloaks can\'t be bought together with Lite. They come back once you check out or remove Lite.';
         saved.appendChild(note);
         renderCapeList(saved, capes, true);
         itemsEl.appendChild(saved);
@@ -284,7 +284,7 @@
       summaryEl.hidden = true;
       const empty = document.createElement('div');
       empty.className = 'cart-empty';
-      empty.innerHTML = '<p>Your cart is empty.</p><a class="detail-cta cta-buy" href="/capes">Browse capes</a>';
+      empty.innerHTML = '<p>Your cart is empty.</p><a class="detail-cta cta-buy" href="/cloaks">Browse cloaks</a>';
       itemsEl.appendChild(empty);
       return;
     }
@@ -363,8 +363,8 @@
       ? 'Nothing is charged today. Your free trial ends tomorrow, then Lite renews at ' + money(lite.price) + ' / month until you cancel.'
       : 'Checkout is handled securely by Whop. Lite unlocks in the Frost Launcher right after you subscribe.';
     else if (quote && quote.promoIgnored) checkoutNote.textContent = 'Code ' + quote.promoIgnored + ' is added on the Whop checkout page. With a collection in your cart, you pay the total shown here.';
-    else if (quote && quote.promoCode) checkoutNote.textContent = 'Code ' + quote.promoCode + ' is applied on the Whop checkout page. Your capes unlock right after payment.';
-    else checkoutNote.textContent = 'Checkout is handled securely by Whop. Your capes unlock right after payment.';
+    else if (quote && quote.promoCode) checkoutNote.textContent = 'Code ' + quote.promoCode + ' is applied on the Whop checkout page. Your cloaks unlock right after payment.';
+    else checkoutNote.textContent = 'Checkout is handled securely by Whop. Your cloaks unlock right after payment.';
   }
 
   function showPromoMsg(text, ok) {
@@ -392,7 +392,7 @@
       }
       if (data.removed && data.removed.length) {
         Store.removeFromCart(data.removed.map(function (r) { return r.id; }));
-        if (data.removed.some(function (r) { return r.reason === 'owned'; })) Store.showToast('Capes you already own were removed from your cart.');
+        if (data.removed.some(function (r) { return r.reason === 'owned'; })) Store.showToast('Cloaks you already own were removed from your cart.');
       }
       quote = data;
       if (promo && !data.promoValid) {
@@ -527,6 +527,6 @@
       }
     })
     .catch(function () {
-        itemsEl.innerHTML = '<div class="cart-empty">Couldn\'t load the cape catalog. Please try again later.</div>';
+        itemsEl.innerHTML = '<div class="cart-empty">Couldn\'t load the cloak catalog. Please try again later.</div>';
     });
 })();

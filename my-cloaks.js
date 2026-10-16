@@ -9,7 +9,7 @@
     const wrap = document.createElement('div');
     wrap.className = 'store-empty';
     const text = document.createElement('p');
-    text.textContent = 'Sign in with Discord to see the capes linked to your account.';
+    text.textContent = 'Sign in with Discord to see the cloaks linked to your account.';
     wrap.appendChild(text);
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -39,7 +39,7 @@
       const empty = document.createElement('div');
       empty.className = 'store-empty';
       const text = document.createElement('p');
-      text.textContent = "You don't own any capes yet.";
+      text.textContent = "You don't own any cloaks yet.";
       empty.appendChild(text);
       const link = document.createElement('a');
       link.className = 'detail-cta cta-buy';
@@ -70,7 +70,7 @@
       grid.innerHTML = '';
       const err = document.createElement('div');
       err.className = 'store-error';
-      err.textContent = "Couldn't load your capes. Please try again later.";
+      err.textContent = "Couldn't load your cloaks. Please try again later.";
       grid.appendChild(err);
     });
 })();

@@ -166,7 +166,7 @@
     if (!visible.length) {
       const empty = document.createElement('div');
       empty.className = 'store-empty';
-      empty.textContent = filters.query || activeFilterCount() ? 'No capes match these filters.' : 'No capes available right now.';
+      empty.textContent = filters.query || activeFilterCount() ? 'No cloaks match these filters.' : 'No cloaks available right now.';
       grid.appendChild(empty);
     }
     grid.classList.toggle('show-mature', filters.type.indexOf('mature') !== -1);
@@ -183,8 +183,8 @@
       grid.appendChild(card);
     });
     document.getElementById('catalogCount').textContent = visible.length === all.length
-      ? all.length + ' capes'
-      : visible.length + ' of ' + all.length + ' capes';
+      ? all.length + ' cloaks'
+      : visible.length + ' of ' + all.length + ' cloaks';
     const n = activeFilterCount();
     const countEl = document.getElementById('filterCount');
     countEl.textContent = String(n);
@@ -421,7 +421,7 @@
       grid.innerHTML = '';
       const err = document.createElement('div');
       err.className = 'store-error';
-      err.textContent = "Couldn't load the cape catalog. Please try again later.";
+      err.textContent = "Couldn't load the cloak catalog. Please try again later.";
       grid.appendChild(err);
     });
 })();

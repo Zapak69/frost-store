@@ -281,7 +281,7 @@
     navMenu.setAttribute('role', 'menu');
     navMenu.innerHTML =
       '<a class="frost-nav-menu-item frost-nav-manage" role="menuitem" href="' + MANAGE_URL + '">' + ICON_USER + 'Manage</a>' +
-      '<a class="frost-nav-menu-item frost-nav-capes" role="menuitem" href="my-capes">' + ICON_CAPE + 'My Capes</a>' +
+      '<a class="frost-nav-menu-item frost-nav-capes" role="menuitem" href="my-cloaks">' + ICON_CAPE + 'My Cloaks</a>' +
       '<button type="button" class="frost-nav-menu-item is-danger frost-nav-signout" role="menuitem">' + ICON_LOGOUT + 'Sign Out</button>';
     navMenu.querySelector('.frost-nav-manage').addEventListener('click', closeNavMenu);
     navMenu.querySelector('.frost-nav-capes').addEventListener('click', closeNavMenu);
@@ -593,8 +593,8 @@
       const text = document.createElement('p');
       text.textContent = 'Your cart is empty.';
       const browse = document.createElement('a');
-      browse.href = '/capes';
-      browse.textContent = 'Browse capes';
+      browse.href = '/cloaks';
+      browse.textContent = 'Browse cloaks';
       empty.appendChild(text);
       empty.appendChild(browse);
       body.appendChild(empty);
@@ -671,12 +671,12 @@
         const cape = cartPopCatalog.find(function (c) { return c && c.id === id; });
         if (!cape || isOwned(cape, profileCache)) return;
         const baseName = String(cape.name || cape.id);
-        const name = /\bcape$/i.test(baseName) ? baseName : baseName + ' - Cape';
+        const name = /\b(cape|cloak)$/i.test(baseName) ? baseName : baseName + ' - Cloak';
         const base = Number(cape.store && cape.store.price) || 0;
         const member = memberPrice(cape);
         const opts = {
           thumb: cartPopThumb(cape),
-          href: 'cape?id=' + encodeURIComponent(cape.id),
+          href: 'cloak?id=' + encodeURIComponent(cape.id),
           name: name,
           price: popMoney(member ? member.price : base),
           oldPrice: member ? popMoney(base) : '',
@@ -1022,16 +1022,34 @@
     const card = document.createElement('a');
     card.className = 'collection-card';
     card.href = 'collection?id=' + encodeURIComponent(col.id);
+    const capes = col.capes.map(function (id) { return (catalog || []).find(function (c) { return c.id === id; }); }).filter(Boolean);
     const banner = document.createElement('div');
     banner.className = 'collection-card-banner';
+    const showcase = function () {
+      card.classList.add('collection-card--no-banner');
+      const row = document.createElement('div');
+      row.className = 'collection-card-showcase';
+      capes.slice(0, 6).forEach(function (c) {
+        const t = document.createElement('span');
+        t.className = 'collection-showcase-cape';
+        if (c.mature !== true) t.style.backgroundImage = 'url("' + CAPES_BASE + String(c.file).split('/').map(encodeURIComponent).join('/') + '")';
+        row.appendChild(t);
+      });
+      banner.insertBefore(row, banner.firstChild);
+    };
     const url = collectionBannerUrl(col);
     if (url) {
       const img = document.createElement('img');
       img.src = url;
       img.alt = '';
       img.loading = 'lazy';
-      img.addEventListener('error', function () { img.remove(); });
+      img.addEventListener('error', function () {
+        img.remove();
+        showcase();
+      });
       banner.appendChild(img);
+    } else {
+      showcase();
     }
     const ends = collectionEnds(col);
     if (ends) {
@@ -1049,14 +1067,13 @@
     name.className = 'collection-card-name';
     name.textContent = col.name || col.id;
     text.appendChild(name);
-    const capes = col.capes.map(function (id) { return (catalog || []).find(function (c) { return c.id === id; }); }).filter(Boolean);
     const meta = document.createElement('div');
     meta.className = 'collection-card-meta';
     const paid = capes.filter(isCartable);
     const left = paid.filter(function (c) { return !isOwned(c, profile); });
     const ownedPaid = paid.length - left.length;
     if (profile && capes.length && capes.every(function (c) { return isOwned(c, profile); })) {
-      meta.textContent = capes.length + (capes.length === 1 ? ' cape' : ' capes') + ' · ';
+      meta.textContent = capes.length + (capes.length === 1 ? ' cloak' : ' cloaks') + ' · ';
       const owned = document.createElement('span');
       owned.className = 'collection-card-owned';
       owned.textContent = 'Owned';
@@ -1068,7 +1085,7 @@
       const price = Math.round((leftSum - Math.round(leftSum * rate * 100) / 100) * 100) / 100;
       meta.textContent = 'You own ' + ownedPaid + ' of ' + paid.length + ' · complete for €' + price.toFixed(2);
     } else {
-      meta.textContent = capes.length + (capes.length === 1 ? ' cape' : ' capes') + (bundleLabel(col) ? ' · ' + bundleLabel(col) : '');
+      meta.textContent = capes.length + (capes.length === 1 ? ' cloak' : ' cloaks') + (bundleLabel(col) ? ' · ' + bundleLabel(col) : '');
     }
     text.appendChild(meta);
     body.appendChild(text);
@@ -1288,7 +1305,7 @@
   function buildCapeCard(cape, profile) {
     const card = document.createElement('a');
     card.className = 'cape-card';
-    card.href = 'cape?id=' + encodeURIComponent(cape.id);
+    card.href = 'cloak?id=' + encodeURIComponent(cape.id);
     card.appendChild(buildCapePreview(cape));
     const name = document.createElement('div');
     name.className = 'cape-card-name';
@@ -1376,7 +1393,7 @@
         showStoreToast('Your cart is full (' + CART_MAX_ITEMS + ' items). Check out first.');
         return;
       }
-      if (loadLitePlan()) showStoreToast('Added to Saved for later. Capes are checked out separately from FrostClient Lite.');
+      if (loadLitePlan()) showStoreToast('Added to Saved for later. Cloaks are checked out separately from FrostClient Lite.');
       paint();
       btn.classList.add('hold');
       btn.classList.add('just-added');
@@ -1460,7 +1477,7 @@
         return;
       }
       if (capeReturn) {
-        window.location.replace('/cape?id=' + encodeURIComponent(capeReturn[1]));
+        window.location.replace('/cloak?id=' + encodeURIComponent(capeReturn[1]));
         return;
       }
       if (cartReturn) {
@@ -1516,7 +1533,7 @@
       render();
     })
     .catch(function () {
-      grid.innerHTML = '<div class="store-error">Couldn\'t load capes. Please try again later.</div>';
+      grid.innerHTML = '<div class="store-error">Couldn\'t load cloaks. Please try again later.</div>';
     });
 })();
 
@@ -1592,7 +1609,7 @@
     banner.innerHTML = '<span class="featured-lite-glow" aria-hidden="true"></span>'
       + '<span class="featured-lite-text"><span class="featured-lite-eyebrow">FrostClient Lite</span>'
       + '<span class="featured-lite-title">More FPS. Exclusive perks.</span>'
-      + '<span class="featured-lite-desc">Up to +400 FPS over regular Frost, exclusive Lite capes, priority support and up to 10% off everything in the store.</span></span>';
+      + '<span class="featured-lite-desc">Up to +400 FPS over regular Frost, exclusive Lite cloaks, priority support and up to 10% off everything in the store.</span></span>';
     banner.insertBefore(rain, banner.firstChild);
     return banner;
   }
