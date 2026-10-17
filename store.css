@@ -2763,6 +2763,25 @@ footer {
     radial-gradient(circle at 85% 80%, rgba(191,90,242,0.22), transparent 55%),
     #0d1014;
 }
+.featured-banner.has-showcase {
+  display: flex; align-items: center; justify-content: center;
+  background:
+    radial-gradient(ellipse at 50% 120%, rgba(79,200,248,0.18), transparent 65%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 36px),
+    linear-gradient(180deg, #121a20, #0c0d0f);
+}
+.featured-banner.has-showcase .collection-card-showcase {
+  gap: clamp(14px, 2.6vw, 34px);
+}
+.featured-banner.has-showcase .collection-showcase-cape {
+  width: clamp(40px, 6.4vw, 96px);
+}
+.featured-slide:hover .featured-banner.has-showcase .collection-showcase-cape {
+  transform: translateY(-4px);
+}
+.featured-slide:hover .featured-banner.has-showcase .collection-showcase-cape:nth-child(even) {
+  transform: translateY(-8px);
+}
 .featured-fallback-title {
   font-size: clamp(26px, 5vw, 60px); font-weight: 800; letter-spacing: -1.5px;
   text-align: center; text-wrap: balance; line-height: 1.05;

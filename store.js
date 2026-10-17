@@ -996,7 +996,9 @@
     collectionBannerUrl: collectionBannerUrl,
     bundleLabel: bundleLabel,
     bundleRate: bundleRate,
-    buildCollectionCard: buildCollectionCard
+    buildCollectionCard: buildCollectionCard,
+    collectionCapes: collectionCapes,
+    buildCollectionShowcase: buildCollectionShowcase
   };
 
   function isStoreHidden(cape) {
@@ -1054,24 +1056,32 @@
     return col && col.banner ? CAPES_BASE + String(col.banner).split('/').map(encodeURIComponent).join('/') : null;
   }
 
+  function collectionCapes(col, catalog) {
+    return (col.capes || []).map(function (id) { return (catalog || []).find(function (c) { return c.id === id; }); }).filter(Boolean);
+  }
+
+  function buildCollectionShowcase(capes) {
+    const row = document.createElement('div');
+    row.className = 'collection-card-showcase';
+    capes.slice(0, 6).forEach(function (c) {
+      const t = document.createElement('span');
+      t.className = 'collection-showcase-cape';
+      if (c.mature !== true) t.style.backgroundImage = 'url("' + CAPES_BASE + String(c.file).split('/').map(encodeURIComponent).join('/') + '")';
+      row.appendChild(t);
+    });
+    return row;
+  }
+
   function buildCollectionCard(col, catalog, profile) {
     const card = document.createElement('a');
     card.className = 'collection-card';
     card.href = 'collection?id=' + encodeURIComponent(col.id);
-    const capes = col.capes.map(function (id) { return (catalog || []).find(function (c) { return c.id === id; }); }).filter(Boolean);
+    const capes = collectionCapes(col, catalog);
     const banner = document.createElement('div');
     banner.className = 'collection-card-banner';
     const showcase = function () {
       card.classList.add('collection-card--no-banner');
-      const row = document.createElement('div');
-      row.className = 'collection-card-showcase';
-      capes.slice(0, 6).forEach(function (c) {
-        const t = document.createElement('span');
-        t.className = 'collection-showcase-cape';
-        if (c.mature !== true) t.style.backgroundImage = 'url("' + CAPES_BASE + String(c.file).split('/').map(encodeURIComponent).join('/') + '")';
-        row.appendChild(t);
-      });
-      banner.insertBefore(row, banner.firstChild);
+      banner.insertBefore(buildCollectionShowcase(capes), banner.firstChild);
     };
     const url = collectionBannerUrl(col);
     if (url) {
@@ -1601,6 +1611,7 @@
   const panelCta = panel.querySelector('.home-collection-cta');
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let collections = null;
+  let catalog = [];
   let built = false;
   let items = [];
   let slides = [];
@@ -1657,6 +1668,12 @@
     const banner = document.createElement('div');
     banner.className = 'featured-banner';
     const fallback = function () {
+      const capes = Store.collectionCapes(col, catalog);
+      if (capes.length) {
+        banner.classList.add('has-showcase');
+        banner.insertBefore(Store.buildCollectionShowcase(capes), banner.firstChild);
+        return;
+      }
       banner.classList.add('is-empty');
       const title = document.createElement('span');
       title.className = 'featured-fallback-title';
@@ -1830,7 +1847,12 @@
     if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1));
   });
 
-  Store.loadCollections().then(function (list) {
+  Promise.all([
+    Store.loadCollections(),
+    Store.fetchJsonWithRetry(Store.capesJsonUrl, { cache: 'no-store' }, 2).catch(function () { return []; })
+  ]).then(function (res) {
+    const list = res[0];
+    catalog = Array.isArray(res[1]) ? res[1] : [];
     collections = list.filter(function (col) { return Store.collectionActive(col) && col.featured === true; }).sort(function (a, b) {
       const la = a.limitedUntil ? new Date(a.limitedUntil).getTime() : 0;
       const lb = b.limitedUntil ? new Date(b.limitedUntil).getTime() : 0;
