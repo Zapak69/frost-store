@@ -2608,6 +2608,18 @@ footer {
 .collection-hero img {
   display: block; width: 100%; height: 100%; object-fit: cover;
 }
+.collection-hero[hidden] {
+  display: none;
+}
+.collection-badges {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px;
+}
+.collection-badges:empty {
+  display: none;
+}
+.collection-badges .collection-limited, .collection-badges .collection-owned {
+  position: static;
+}
 .collection-hero.is-empty {
   background: radial-gradient(circle at 30% 30%, rgba(79,200,248,0.18), transparent 60%), var(--surface);
 }

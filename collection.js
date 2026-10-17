@@ -4,6 +4,7 @@
   const page = document.getElementById('collectionPage');
   const notFound = document.getElementById('collectionNotfound');
   const hero = document.getElementById('collectionHero');
+  let badgeRow = null;
   const intro = document.getElementById('collectionIntro');
   const box = document.getElementById('bundleBox');
   const capesSection = document.getElementById('collectionCapesSection');
@@ -21,21 +22,29 @@
     document.title = 'Collection not found | Frost Store';
   }
 
+  function badgeHost() {
+    return hero.hidden && badgeRow ? badgeRow : hero;
+  }
+
+  function hideHero() {
+    hero.hidden = true;
+    if (!badgeRow) return;
+    hero.querySelectorAll('.collection-limited, .collection-owned').forEach(function (el) { badgeRow.appendChild(el); });
+  }
+
   function renderHero() {
     hero.classList.remove('skeleton-shimmer');
     hero.innerHTML = '';
+    hero.hidden = false;
     const url = Store.collectionBannerUrl(col);
     if (url) {
       const img = document.createElement('img');
       img.src = url;
       img.alt = col.name || col.id;
-      img.addEventListener('error', function () {
-        img.remove();
-        hero.classList.add('is-empty');
-      });
+      img.addEventListener('error', hideHero);
       hero.appendChild(img);
     } else {
-      hero.classList.add('is-empty');
+      hero.hidden = true;
     }
     const ends = Store.collectionEnds(col);
     if (ends) {
@@ -43,7 +52,7 @@
       lim.className = 'collection-limited collection-limited--lg';
       lim.textContent = 'Limited · ' + ends.text;
       lim.title = 'Available until ' + new Date(ends.until).toLocaleString();
-      hero.appendChild(lim);
+      badgeHost().appendChild(lim);
     }
   }
 
@@ -53,6 +62,9 @@
     eyebrow.className = 'store-eyebrow';
     eyebrow.textContent = 'Collection';
     intro.appendChild(eyebrow);
+    badgeRow = document.createElement('div');
+    badgeRow.className = 'collection-badges';
+    intro.appendChild(badgeRow);
     const h1 = document.createElement('h1');
     h1.className = 'collection-title';
     h1.textContent = col.name || col.id;
@@ -75,13 +87,13 @@
     box.innerHTML = '';
     box.hidden = ownedAll;
     box.parentElement.classList.toggle('is-owned', ownedAll);
-    const oldBadge = hero.querySelector('.collection-owned');
+    const oldBadge = document.querySelector('#collectionPage .collection-owned');
     if (oldBadge) oldBadge.remove();
     if (ownedAll) {
       const badge = document.createElement('span');
       badge.className = 'collection-owned';
       badge.textContent = 'Owned';
-      hero.appendChild(badge);
+      badgeHost().appendChild(badge);
       return;
     }
     const title = document.createElement('div');
@@ -183,8 +195,8 @@
     if (!capes.length) return showNotFound();
     document.title = (col.name || col.id) + ' | Frost Store';
     page.removeAttribute('aria-busy');
-    renderHero();
     renderIntro();
+    renderHero();
     Store.onProfile(function (profile) {
       renderBox(profile);
       renderCapes(profile);

@@ -102,7 +102,10 @@
         return '';
     }
   }
-  function claim(paymentId) {
+  const CLAIM_TRANSIENT = { busy: 1, rate_limited: 1, network_error: 1, upstream_error: 1, payment_not_paid: 1, whop_error: 1 };
+  const CLAIM_RETRIES = 3;
+  function claim(paymentId, attempt) {
+    attempt = attempt || 0;
     const token = Store.loadToken();
     if (!token) {
       show('stateLogin');
@@ -112,6 +115,12 @@
     Store.fetchJsonWithRetry(Store.apiUrl + '?action=capeClaim&token=' + encodeURIComponent(token)
       + '&payment_id=' + encodeURIComponent(paymentId), { cache: 'no-store' }, 2)
       .then(function (data) {
+        if (data && !data.ok && CLAIM_TRANSIENT[data.error] && attempt < CLAIM_RETRIES) {
+          setTimeout(function () {
+              claim(paymentId, attempt + 1);
+          }, 2500 * (attempt + 1));
+          return;
+        }
         if (!data || !data.ok) {
           if (data && data.error === 'token_expired') {
             Store.clearAuth();
@@ -124,9 +133,13 @@
             payment_not_paid: 'This purchase is not marked as paid yet. Try again in a minute.',
             unknown_product: "This purchase doesn't match any cloak in the store. Please contact support.",
             already_claimed: 'This purchase was already claimed by a different Discord account.',
-            whop_error: 'Whop could not be reached. Please try again.'
+            whop_error: 'Whop could not be reached. Please try again.',
+            not_lite_purchase: "This payment isn't a Frost Lite purchase.",
+            subscription_inactive: "This subscription isn't active right now. If you just paid, wait a minute and try again.",
+            busy: 'Our server is busy right now. Please try again in a minute.'
           };
-          showError(messages[data && data.error] || 'Something went wrong verifying your purchase.', data && data.detail);
+          const trialUsed = data && data.error === 'subscription_inactive' && /trial_already_used/.test(String(data.detail || ''));
+          showError(trialUsed ? 'A free trial was already used on this Discord account.' : (messages[data && data.error] || 'Something went wrong verifying your purchase.'), trialUsed ? '' : data && data.detail);
           return;
         }
         try {

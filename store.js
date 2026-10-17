@@ -173,9 +173,18 @@
         cleanUrl.searchParams.delete(k);
     });
     window.history.replaceState(null, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
-    if (!code) return null;
-    if (!storedState || !returnedState.startsWith(storedState)) return null;
-    return { code: code, state: returnedState.slice(storedState.length) };
+    if (!code) {
+      showStoreToast(params.get('error') === 'access_denied' ? 'Sign-in was cancelled.' : 'Discord sign-in failed. Please try again.');
+      return null;
+    }
+    if (storedState) {
+      if (!returnedState.startsWith(storedState)) {
+        showStoreToast('Sign-in session mismatch. Please try signing in again.');
+        return null;
+      }
+      return { code: code, state: returnedState.slice(storedState.length) };
+    }
+    return { code: code, state: returnedState.replace(/^[a-f0-9]{32}/, '') };
   }
 
   let profileCache = null;
@@ -208,13 +217,40 @@
     return true;
   }
 
+  function delay(ms) {
+    return new Promise(function (resolve) {
+        setTimeout(resolve, ms);
+    });
+  }
+
   function exchangeCode(code, redirectKind) {
-    return fetchJsonWithRetry(STORE_API_URL + '?action=storeAuth&code=' + encodeURIComponent(code)
-      + '&rd=' + encodeURIComponent(redirectKind || 'store'), { cache: 'no-store' }, 2)
-      .then(function (data) {
+    const url = STORE_API_URL + '?action=storeAuth&code=' + encodeURIComponent(code) + '&rd=' + encodeURIComponent(redirectKind || 'store');
+    let sawNetworkError = false;
+    function attempt(n) {
+      return fetch(url, { cache: 'no-store' }).then(function (r) {
+        return r.json().catch(function () {
+            return { ok: false, error: 'bad_response', detail: 'HTTP ' + r.status };
+        }).then(function (data) {
+          if (data && !data.ok && (data.error === 'busy' || data.error === 'rate_limited') && n < 3) {
+            return delay(1500 * (n + 1)).then(function () {
+                return attempt(n + 1);
+            });
+          }
+          if (data && !data.ok && data.error === 'auth_failed' && sawNetworkError) throw new TypeError('network_error');
+          return data;
+        });
+      }, function (err) {
+        if (n >= 2) throw err;
+        sawNetworkError = true;
+        return delay(1000 * (n + 1)).then(function () {
+            return attempt(n + 1);
+        });
+      });
+    }
+    return attempt(0).then(function (data) {
         if (data && data.ok) applyProfile(data);
         return data;
-      });
+    });
   }
 
   function refreshProfile() {
@@ -1456,11 +1492,14 @@
     profileListeners.push(updateNav);
     const oauthReturn = document.body.dataset.storeAuthPage === 'ty' ? null : consumeOauthReturn();
     if (oauthReturn) setAuthPending(true);
+    let signInOk = false;
     const authFlow = oauthReturn
       ? exchangeCode(oauthReturn.code, 'store').then(function (data) {
           if (!data || !data.ok) {
             console.error('Store sign-in failed:', data);
             showStoreToast('Sign-in failed' + (data && data.error ? ' (' + data.error + ')' : '') + '. Please try again.');
+          } else {
+            signInOk = true;
           }
           return profileCache;
         }).catch(function () {
@@ -1472,15 +1511,15 @@
     const capeReturn = oauthReturn ? /\.c\.([a-z0-9_-]{1,64})$/.exec(oauthReturn.state || '') : null;
     const cartReturn = oauthReturn ? /\.k$/.test(oauthReturn.state || '') : false;
     authFlow.then(function () {
-      if (giftReturn) {
+      if (signInOk && giftReturn) {
         window.location.replace('/gift?c=' + encodeURIComponent(giftReturn[1]));
         return;
       }
-      if (capeReturn) {
+      if (signInOk && capeReturn) {
         window.location.replace('/cloak?id=' + encodeURIComponent(capeReturn[1]));
         return;
       }
-      if (cartReturn) {
+      if (signInOk && cartReturn) {
         window.location.replace('/cart');
         return;
       }
