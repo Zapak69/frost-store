@@ -1604,6 +1604,8 @@
   const line = section.querySelector('.featured-line-fill');
   const lineWrap = section.querySelector('.featured-line');
   const dotsWrap = section.querySelector('.featured-dots');
+  const prevBtn = section.querySelector('.featured-arrow--prev');
+  const nextBtn = section.querySelector('.featured-arrow--next');
   const panel = section.querySelector('.featured-panel');
   const panelInfo = panel.querySelector('.featured-panel-info');
   const panelName = panel.querySelector('.home-collection-name');
@@ -1823,6 +1825,8 @@
       return btn;
     }) : [];
     dotsWrap.hidden = slides.length < 2;
+    if (prevBtn) prevBtn.hidden = slides.length < 2;
+    if (nextBtn) nextBtn.hidden = slides.length < 2;
     lineWrap.hidden = slides.length < 2;
     section.hidden = !slides.length;
     if (!slides.length) return;
@@ -1834,6 +1838,8 @@
     }
   }
 
+  if (prevBtn) prevBtn.addEventListener('click', function () { go(index - 1); });
+  if (nextBtn) nextBtn.addEventListener('click', function () { go(index + 1); });
   viewport.addEventListener('mouseenter', function () { paused = true; });
   viewport.addEventListener('mouseleave', function () { paused = false; });
   section.addEventListener('focusin', function () { paused = true; });
