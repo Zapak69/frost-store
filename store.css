@@ -1581,6 +1581,19 @@ footer {
 .lite-review-text {
   font-size: 14px; color: var(--muted); line-height: 1.55; margin: 0;
 }
+.lite-review-fps {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px; color: var(--muted); margin-bottom: 10px;
+}
+.lite-review-fps strong {
+  color: var(--green); font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.lite-review-fps-icon {
+  display: flex; align-items: center; color: var(--green); flex-shrink: 0;
+}
+.lite-review-fps-icon svg {
+  width: 14px; height: 14px;
+}
 .lite-account .store-sub {
   margin-bottom: 18px;
 }

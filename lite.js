@@ -26,6 +26,16 @@
     return m ? Number(m[1]) : 0;
   }
 
+  // Only shown when the numbers actually went up - a review whose FPS dropped still gets listed
+  // for its text, but the store is not the place to advertise the drop. Same rule the main site
+  // and the admin review list use.
+  function hasFps(review) {
+    const before = Number(review.fpsBefore);
+    const after = Number(review.fpsAfter);
+    return review.fpsBefore != null && review.fpsAfter != null
+      && !isNaN(before) && !isNaN(after) && after > before;
+  }
+
   function timestampOf(review) {
     const t = new Date(review.submittedAt || review.updatedAt || 0).getTime();
     return isNaN(t) ? 0 : t;
@@ -63,6 +73,19 @@
     col.appendChild(stars);
     head.appendChild(col);
     card.appendChild(head);
+    if (hasFps(review)) {
+      const fps = document.createElement('div');
+      fps.className = 'lite-review-fps';
+      const icon = document.createElement('span');
+      icon.className = 'lite-review-fps-icon';
+      icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>';
+      const before = document.createElement('strong');
+      before.textContent = Math.round(Number(review.fpsBefore)) + ' FPS';
+      const after = document.createElement('strong');
+      after.textContent = Math.round(Number(review.fpsAfter)) + ' FPS';
+      fps.append(icon, before, ' → ', after);
+      card.appendChild(fps);
+    }
     const text = document.createElement('p');
     text.className = 'lite-review-text';
     text.textContent = review.comment || '';
