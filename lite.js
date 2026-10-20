@@ -36,6 +36,15 @@
       && !isNaN(before) && !isNaN(after) && after > before;
   }
 
+  // The website drops these from /reviews and the homepage; the store was not doing the same, so
+  // a review reporting a drop could still be picked as one of the four shown here.
+  function worseFps(review) {
+    const before = Number(review.fpsBefore);
+    const after = Number(review.fpsAfter);
+    return review.fpsBefore != null && review.fpsAfter != null
+      && !isNaN(before) && !isNaN(after) && after < before;
+  }
+
   function timestampOf(review) {
     const t = new Date(review.submittedAt || review.updatedAt || 0).getTime();
     return isNaN(t) ? 0 : t;
@@ -104,7 +113,8 @@
       if (!Array.isArray(data)) return;
       const picked = data.filter(function (r) {
         return (r.booster === true || r.subscription === true) && r.comment
-          && parseStars(r.lite === true && r.liteStars ? r.liteStars : r.stars) >= 3;
+          && parseStars(r.lite === true && r.liteStars ? r.liteStars : r.stars) >= 3
+          && !worseFps(r);
       }).sort(function (a, b) {
           return timestampOf(b) - timestampOf(a);
       }).slice(0, 4);
