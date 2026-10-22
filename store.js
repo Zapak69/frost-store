@@ -22,7 +22,7 @@
     for (const p of particles) {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(168,230,248,${p.opacity})`;
+      ctx.fillStyle = `rgba(255,192,138,${p.opacity})`;
       ctx.fill();
       p.y += p.speed; p.x += p.drift;
       if (p.y > H + 10) {

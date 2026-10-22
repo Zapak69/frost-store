@@ -1,22 +1,22 @@
 :root {
-  --bg: #000000;
-  --bg2: #000000;
-  --surface: #1c1c1e;
-  --surface2: #2c2c2e;
-  --bg-hover: #3a3a3c;
-  --frost-blue: #4fc8f8;
-  --frost-light: #a8e6f8;
-  --frost-deep: #1a7fc4;
-  --frost-glow: #0a84ff;
-  --accent: #4fc8f8;
-  --accent-bright: #0a84ff;
-  --accent-glow: rgba(79,200,248,0.28);
+  --bg: #0a0510;
+  --bg2: #0a0510;
+  --surface: #17101f;
+  --surface2: #221829;
+  --bg-hover: #2e2136;
+  --frost-blue: #ff7a1a;
+  --frost-light: #ffc08a;
+  --frost-deep: #c2410c;
+  --frost-glow: #a855f7;
+  --accent: #ff7a1a;
+  --accent-bright: #a855f7;
+  --accent-glow: rgba(255,122,26,0.28);
   --green: #32d74b;
   --red: #ff6961;
   --star: #ffc94d;
   --text: #f5f5f7;
-  --muted: #86868b;
-  --muted-dim: #636366;
+  --muted: #9a8fa6;
+  --muted-dim: #6f6477;
   --border: rgba(255,255,255,0.08);
   --border-strong: rgba(255,255,255,0.14);
   --radius-lg: 24px;
@@ -39,7 +39,7 @@ body {
 
 ::selection {
   background: var(--accent);
-  color: #051015;
+  color: #1a0a05;
 }
 ::-webkit-scrollbar {
   width: 10px;
@@ -65,7 +65,7 @@ body {
 
 .btn-primary {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  background: var(--frost-blue); color: #06121c;
+  background: var(--frost-blue); color: #1a0a05;
   font-family: inherit; font-weight: 600; font-size: 15px;
   padding: 15px 32px; border-radius: 980px; border: none; cursor: pointer;
   text-decoration: none; transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), filter 0.2s ease;

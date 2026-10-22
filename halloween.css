@@ -1,0 +1,112 @@
+/* Halloween dressing: cobwebs, a dangling spider and a warm haze.
+   Everything here is decoration only - it is fixed, never scrolls, and never takes a click, so it
+   cannot get in the way of the page underneath. Loaded after theme.css on every page. */
+
+:root {
+  --web: rgba(255, 198, 150, 0.22);
+  --web-strong: rgba(255, 214, 178, 0.34);
+  --pumpkin: #ff7a1a;
+  --witch: #a855f7;
+}
+
+/* A low warm glow from the bottom and a violet one from the top, so the near-black background
+   reads as a night scene rather than a flat void. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(90% 60% at 50% 108%, rgba(255, 122, 26, 0.16), transparent 70%),
+    radial-gradient(70% 50% at 50% -10%, rgba(168, 85, 247, 0.14), transparent 70%);
+}
+
+.hw-decor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  overflow: hidden;
+}
+
+.hw-web {
+  position: absolute;
+  width: clamp(150px, 19vw, 300px);
+  height: clamp(150px, 19vw, 300px);
+  opacity: 0.85;
+}
+
+.hw-web--tl { top: 0; left: 0; }
+.hw-web--tr { top: 0; right: 0; transform: scaleX(-1); }
+
+/* The spider hangs from the top on its own thread and breathes up and down. The thread is drawn
+   by the element's own border so there is no extra node for it. */
+.hw-spider {
+  position: absolute;
+  top: 0;
+  /* Hangs on the right: these sites are all left-aligned, so the left edge is where headings
+     start and the spider was landing on top of them. */
+  right: clamp(70px, 21vw, 330px);
+  width: 2px;
+  height: clamp(90px, 14vh, 170px);
+  background: linear-gradient(to bottom, transparent, var(--web-strong));
+  transform-origin: top center;
+  animation: hwDangle 7s ease-in-out infinite;
+}
+
+.hw-spider svg {
+  position: absolute;
+  left: 50%;
+  bottom: -26px;
+  width: 46px;
+  height: 46px;
+  transform: translateX(-50%);
+  color: #1b1220;
+}
+
+@keyframes hwDangle {
+  0%, 100% { transform: translateY(0) rotate(-2.2deg); }
+  50% { transform: translateY(16px) rotate(2.2deg); }
+}
+
+/* Embers drifting up past the content. index.html has its own canvas; this is for every other
+   page, kept light on purpose. */
+.hw-ember {
+  position: absolute;
+  bottom: -12px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--pumpkin);
+  box-shadow: 0 0 7px 1px rgba(255, 122, 26, 0.6);
+  animation: hwRise linear infinite;
+}
+
+@keyframes hwRise {
+  from { transform: translateY(0) translateX(0); opacity: 0; }
+  12% { opacity: 0.85; }
+  85% { opacity: 0.55; }
+  to { transform: translateY(-104vh) translateX(var(--sway, 20px)); opacity: 0; }
+}
+
+/* The nav gets a web hanging under it so the decoration is tied to the page, not just the corners. */
+.hw-nav-web {
+  position: absolute;
+  top: 0;
+  right: clamp(24px, 12vw, 220px);
+  width: 120px;
+  height: 56px;
+  opacity: 0.6;
+}
+
+@media (max-width: 720px) {
+  .hw-spider, .hw-nav-web { display: none; }
+  .hw-web { width: 118px; height: 118px; opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hw-spider { animation: none; }
+  .hw-ember { display: none; }
+}
+

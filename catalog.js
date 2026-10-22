@@ -24,12 +24,12 @@
     { key: 'orange', label: 'Orange', hex: '#ff9f0a' },
     { key: 'yellow', label: 'Yellow', hex: '#ffd60a' },
     { key: 'green', label: 'Green', hex: '#32d74b' },
-    { key: 'blue', label: 'Blue', hex: '#0a84ff' },
+    { key: 'blue', label: 'Blue', hex: '#a855f7' },
     { key: 'purple', label: 'Purple', hex: '#bf5af2' },
     { key: 'pink', label: 'Pink', hex: '#ff73fa' },
     { key: 'brown', label: 'Brown', hex: '#a2845e' },
-    { key: 'black', label: 'Black', hex: '#1c1c1e' },
-    { key: 'gray', label: 'Gray', hex: '#8e8e93' },
+    { key: 'black', label: 'Black', hex: '#17101f' },
+    { key: 'gray', label: 'Gray', hex: '#9a8fa6' },
     { key: 'white', label: 'White', hex: '#f5f5f7' }
   ];
 
