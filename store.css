@@ -958,6 +958,55 @@ nav.nav-scrolled {
 .claim-actions {
   display: flex; flex-direction: column; align-items: center; gap: 16px;
 }
+.claim-page:has(#stateLite.active) {
+  max-width: 760px;
+}
+#stateLite .claim-text {
+  max-width: 520px; margin-left: auto; margin-right: auto;
+}
+.lite-welcome {
+  margin: 0 0 22px;
+  font-size: clamp(38px, 9vw, 72px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  text-align: center;
+  text-wrap: balance;
+  color: transparent;
+  background-image: linear-gradient(100deg, #ff73fa 0%, #bf5af2 25%, #ff9ad5 50%, #bf5af2 75%, #ff73fa 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-mask-image: linear-gradient(90deg, #000 45%, transparent 55%);
+  mask-image: linear-gradient(90deg, #000 45%, transparent 55%);
+  -webkit-mask-size: 260% 100%;
+  mask-size: 260% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: liteWelcomeWrite 1.7s cubic-bezier(0.3, 0, 0.25, 1) both, liteWelcomeFlow 6s linear infinite;
+}
+.lite-welcome.is-annual {
+  background-image: linear-gradient(100deg, #ffd60a 0%, #ff9f0a 25%, #fff1a6 50%, #ff9f0a 75%, #ffd60a 100%);
+}
+.lite-welcome-rest {
+  animation: liteWelcomeRest 0.9s cubic-bezier(0.22, 1, 0.36, 1) 1.5s both;
+}
+@keyframes liteWelcomeWrite {
+  from { -webkit-mask-position: 74% 0; mask-position: 74% 0; filter: blur(8px); transform: translateY(8px); }
+  to { -webkit-mask-position: 6% 0; mask-position: 6% 0; filter: blur(0); transform: none; }
+}
+@keyframes liteWelcomeFlow {
+  from { background-position: 0% 50%; }
+  to { background-position: 200% 50%; }
+}
+@keyframes liteWelcomeRest {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lite-welcome { animation: none; -webkit-mask-image: none; mask-image: none; }
+  .lite-welcome-rest { animation: none; }
+}
 .claim-secondary-link {
   font-size: 14px; color: var(--muted); text-decoration: none;
   transition: color 0.2s;

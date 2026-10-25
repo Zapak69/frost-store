@@ -198,6 +198,7 @@
           const annual = data.plan === 'annual';
           document.getElementById('liteLauncherBtn').className = 'detail-cta ' + (annual ? 'cta-annual' : 'cta-lite');
           document.getElementById('liteYearNote').hidden = !annual;
+          document.getElementById('liteWelcome').classList.toggle('is-annual', annual);
           show('stateLite');
           return;
         }
