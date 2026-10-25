@@ -580,7 +580,7 @@
     const main = document.createElement(opts.href ? 'a' : 'div');
     main.className = 'cart-pop-main';
     if (opts.href) main.href = opts.href;
-    main.appendChild(opts.thumb);
+    if (opts.thumb) main.appendChild(opts.thumb);
     const info = document.createElement('div');
     info.className = 'cart-pop-info';
     const name = document.createElement('div');
@@ -648,17 +648,15 @@
     }
     let total = 0;
     if (lite) {
-      const tile = document.createElement('div');
-      tile.className = 'cart-pop-thumb cart-pop-thumb--lite cart-pop-thumb--' + lite.key;
-      tile.textContent = 'LITE';
-      body.appendChild(cartPopRow({
-        cls: 'cart-pop-row--lite',
-        thumb: tile,
+      const liteRow = cartPopRow({
+        cls: 'cart-pop-row--lite cart-pop-row--lite-' + lite.key,
         href: '/lite',
         name: 'FrostClient Lite - ' + lite.name,
         price: popMoney(lite.price) + ' ' + lite.period,
         onRemove: function () { setLitePlan(null); }
-      }));
+      });
+      liteRow.insertBefore(buildLiteRain(8, 'cart-lite-bolt'), liteRow.firstChild);
+      body.appendChild(liteRow);
       total += lite.dueNow;
     }
     if (!cartPopCatalog) {

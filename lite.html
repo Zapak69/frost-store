@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="halloween.css">
 <link rel="stylesheet" href="store.css">
+<link rel="stylesheet" href="lite.css">
 </head>
 <body data-page="lite">
 
@@ -45,106 +46,146 @@
   </div>
 </nav>
 
-<main class="store-page">
-  <header class="store-head home-head">
-    <div class="store-eyebrow store-eyebrow--lite">Exclusive access</div>
-    <h1 class="store-title">FrostClient <span class="lite-grad">Lite</span></h1>
-    <p class="store-sub">The fastest build of Frost, with <strong>200–400 extra FPS</strong> over the regular client depending on your machine, plus exclusive perks on top.</p>
-  </header>
-  <div class="lite-status js-lite-status" hidden>
-    <span class="lite-status-dot"></span><span class="js-lite-status-text">Your Lite subscription is active. Sign in to the Frost Launcher with this Discord account to use it.</span>
-  </div>
-  <div class="lite-plans" id="plans">
-    <article class="lite-plan lite-plan--monthly js-lite-plan" data-plan="monthly">
-      <div class="lite-plan-top">
-        <span class="lite-plan-name">Monthly</span>
-        <span class="lite-plan-current js-lite-current" hidden>Your plan</span>
-      </div>
-      <div class="lite-plan-price"><span class="lite-plan-amount">€2.90</span><span class="lite-plan-period">/ month</span></div>
-      <div class="lite-plan-note">Start with a 1-day free trial. Cancel anytime.</div>
-      <ul class="lite-plan-perks">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>FrostClient Lite build, up to +400 FPS over regular Frost</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Exclusive Lite cloak</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Priority tickets and extended support</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>5 share links, valid for 7 days</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Unlimited party size, free parties fit 4 players</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>5% off</strong> everything in the store</span></li>
-      </ul>
-      <a class="lite-plan-cta js-lite-cta" href="https://whop.com/checkout/plan_oKGeLuyTvJb5u">Start free trial</a>
-    </article>
-    <article class="lite-plan lite-plan--annual js-lite-plan" data-plan="annual">
-      <div class="lite-plan-top">
-        <span class="lite-plan-name">Annual</span>
-        <span class="lite-plan-save">2 months free</span>
-        <span class="lite-plan-current js-lite-current" hidden>Your plan</span>
-      </div>
-      <div class="lite-plan-price"><span class="lite-plan-amount">€29.90</span><span class="lite-plan-period">/ year</span></div>
-      <div class="lite-plan-note">€2.49 / month, billed yearly. <s>€34.80</s></div>
-      <ul class="lite-plan-perks">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Everything in Monthly</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Lite Year</strong> cloak, only for annual plans</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Save €4.90 compared to paying monthly</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><strong>10% off</strong> everything in the store</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>One payment, no monthly renewals</span></li>
-      </ul>
-      <a class="lite-plan-cta js-lite-cta" href="https://whop.com/checkout/plan_YDenpzviXSDXW">Get annual</a>
-    </article>
-  </div>
-  <p class="lite-plan-fine">Payments are handled securely by Whop. By subscribing you agree to our <a href="https://frostclient.eu/terms">Terms of Service</a>. The base FrostClient stays free.</p>
-  <section class="lite-section">
-    <div class="store-eyebrow">Benefits</div>
-    <h2 class="home-section-title">What you get with Lite</h2>
-    <div class="lite-benefits">
-      <div class="lite-benefit">
-        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg></div>
-        <h3>Maximum performance</h3>
-        <p>Optimization tuned all the way up, roughly <strong>+700 FPS</strong> over vanilla and more than double the regular client.</p>
-      </div>
-      <div class="lite-benefit">
-        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M21 16a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2h3v3Z"/><path d="M3 16a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2H3v3Z"/></svg></div>
-        <h3>Priority support</h3>
-        <p>Skip the queue with <strong>priority tickets</strong>, ping staff on Discord and get extended support hours.</p>
-      </div>
-      <div class="lite-benefit">
-        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg></div>
-        <h3>Exclusive cloaks</h3>
-        <p>A cloak only Lite subscribers get, and an even rarer <strong>Lite Year</strong> cloak for annual plans.</p>
-      </div>
-      <div class="lite-benefit">
-        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 5a3 3 0 1 1 0 .01"/><path d="M6 12a3 3 0 1 1 0 .01"/><path d="M18 19a3 3 0 1 1 0 .01"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/></svg></div>
-        <h3>More instance sharing</h3>
-        <p>Share up to <strong>5 active links</strong> at once, each valid for <strong>7 days</strong> instead of 24 hours.</p>
-      </div>
-      <div class="lite-benefit">
-        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01Z"/></svg></div>
-        <h3>Discord recognition</h3>
-        <p>A <strong>special role</strong> on our server and a badge right before your name in game.</p>
-      </div>
-      <div class="lite-benefit">
-        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg></div>
-        <h3>Store discount</h3>
-        <p><strong>5% off</strong> every cloak in the store with Monthly, <strong>10% off</strong> with Annual. Applied automatically at checkout.</p>
-      </div>
-      <div class="lite-benefit">
-        <div class="lite-benefit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <h3>Unlimited parties</h3>
-        <p>Bring the whole squad. Free parties fit <strong>4 players</strong>, while a Lite party leader can invite <strong>as many friends as they want</strong> and everyone follows them to the same server.</p>
-      </div>
+<main class="store-page lp">
+  <section class="lp-hero">
+    <div class="lite-status js-lite-status" hidden>
+      <span class="lite-status-dot"></span><span class="js-lite-status-text">Your Lite subscription is active. Sign in to the Frost Launcher with this Discord account to use it.</span>
+    </div>
+    <div class="lp-pill"><span class="lp-pill-dot"></span>Up to 40% more FPS than regular Frost</div>
+    <h1 class="lp-title">Smoother fights.<br/><span class="lite-grad">Higher FPS.</span></h1>
+    <p class="lp-lead">Lite pushes your PC harder than any other Frost build and puts a cloak on your back that free players can't get.</p>
+    <a class="lp-cta lp-cta--pink lp-cta--big" id="lpHeroCta" href="/cart">Try Lite free for 1 day</a>
+    <p class="lp-hero-micro" id="lpHeroMicro">Free for 24 hours, then €2.90 / month. Cancel anytime.</p>
+  </section>
+
+  <section class="lp-section lp-bench" aria-labelledby="lpBenchTitle">
+    <div class="lp-section-head">
+      <div class="store-eyebrow">Performance</div>
+      <h2 class="home-section-title" id="lpBenchTitle">320 more frames, on the same PC</h2>
+      <p class="lp-section-sub">Average FPS in our benchmark scene. Your exact numbers depend on your hardware, the gap does not.</p>
+    </div>
+    <div class="lp-bars">
+      <div class="lp-bar-row"><span class="lp-bar-label">Vanilla Minecraft</span><div class="lp-bar-track"><div class="lp-bar" style="--w: 7.5%"></div></div><span class="lp-bar-value">85</span></div>
+      <div class="lp-bar-row"><span class="lp-bar-label">Other PvP clients</span><div class="lp-bar-track"><div class="lp-bar" style="--w: 22%"></div></div><span class="lp-bar-value">250</span></div>
+      <div class="lp-bar-row"><span class="lp-bar-label">Frost Client</span><div class="lp-bar-track"><div class="lp-bar lp-bar--frost" style="--w: 71.7%"></div></div><span class="lp-bar-value">810</span></div>
+      <div class="lp-bar-row lp-bar-row--lite"><span class="lp-bar-label">FrostClient Lite</span><div class="lp-bar-track"><div class="lp-bar lp-bar--lite" style="--w: 100%"></div></div><span class="lp-bar-value">1130</span></div>
     </div>
   </section>
-  <section class="lite-section" id="liteReviews" hidden>
-    <div class="store-eyebrow">Reviews</div>
-    <h2 class="home-section-title">What subscribers say</h2>
-    <div class="lite-reviews" id="liteReviewsGrid"></div>
-    <a class="section-more" href="https://frostclient.eu/reviews">View more reviews →</a>
+
+  <section class="lp-section" aria-labelledby="lpCompareTitle">
+    <div class="lp-section-head">
+      <div class="store-eyebrow">Free vs Lite</div>
+      <h2 class="home-section-title" id="lpCompareTitle">Everything free players are missing</h2>
+    </div>
+    <div class="lp-compare-wrap">
+      <table class="lp-compare">
+        <thead>
+          <tr><th scope="col"><span class="sr-only">Feature</span></th><th scope="col">Free</th><th scope="col" class="lp-col-lite">Lite</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Client build</th><td>Optimized Frost</td><td class="lp-col-lite"><strong>Lite build, tuned for max FPS</strong></td></tr>
+          <tr><th scope="row">Lite cloak</th><td><span class="lp-no" aria-label="No">–</span></td><td class="lp-col-lite"><span class="lp-yes" aria-label="Yes"></span></td></tr>
+          <tr><th scope="row">Lite Year cloak</th><td><span class="lp-no" aria-label="No">–</span></td><td class="lp-col-lite">Annual plan</td></tr>
+          <tr><th scope="row">Store discount</th><td><span class="lp-no" aria-label="No">–</span></td><td class="lp-col-lite"><strong>5%</strong> monthly, <strong>10%</strong> annual</td></tr>
+          <tr><th scope="row">Party size</th><td>4 players</td><td class="lp-col-lite"><strong>Unlimited</strong></td></tr>
+          <tr><th scope="row">Instance share links</th><td>Valid 24 hours</td><td class="lp-col-lite"><strong>5 links</strong>, valid 7 days</td></tr>
+          <tr><th scope="row">Support</th><td>Standard tickets</td><td class="lp-col-lite"><strong>Priority tickets</strong>, extended hours</td></tr>
+          <tr><th scope="row">Discord role + in-game badge</th><td><span class="lp-no" aria-label="No">–</span></td><td class="lp-col-lite"><span class="lp-yes" aria-label="Yes"></span></td></tr>
+          <tr class="lp-compare-price"><th scope="row">Price</th><td>Free</td><td class="lp-col-lite">from <strong>€2.49</strong> / month</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
-  <section class="lite-section lite-account">
-    <h2 class="home-section-title">Already subscribed?</h2>
-    <p class="store-sub" id="liteAccountText">Sign in with Discord to check your subscription. Lite activates in the Frost Launcher, signed in with the same Discord account.</p>
-    <div class="lite-account-actions">
-      <button type="button" class="detail-cta cta-secondary" id="liteSigninBtn">Sign in with Discord</button>
-      <a class="detail-cta cta-secondary" href="https://frostclient.eu/?openDownload">Download the launcher</a>
-      <a class="detail-cta cta-secondary" href="https://frostclient.eu/lite/cancel">Cancel subscription</a>
+
+  <section class="lp-section" id="liteReviews" hidden aria-labelledby="lpReviewsTitle">
+    <div class="lp-section-head lp-section-head--row">
+      <div>
+        <div class="store-eyebrow">Reviews</div>
+        <h2 class="home-section-title" id="lpReviewsTitle">Players feel the difference</h2>
+      </div>
+      <a class="section-more" href="https://frostclient.eu/reviews">All reviews →</a>
+    </div>
+    <div class="lp-reviews" id="liteReviewsGrid"></div>
+  </section>
+
+  <section class="lp-section" id="plans" aria-labelledby="lpPlansTitle">
+    <div class="lp-section-head lp-section-head--center">
+      <div class="store-eyebrow store-eyebrow--lite">Plans</div>
+      <h2 class="home-section-title" id="lpPlansTitle">Choose your plan</h2>
+      <p class="lp-section-sub">Both include every Lite perk. Go annual for 2 months free, the Lite Year cloak and 10% off the store.</p>
+    </div>
+    <div class="lp-plans">
+      <article class="lp-plan lp-plan--monthly js-lite-plan" data-plan="monthly">
+        <div class="lp-plan-top">
+          <span class="lp-plan-name">Monthly</span>
+          <span class="lite-plan-current js-lite-current" hidden>Your plan</span>
+        </div>
+        <div class="lp-plan-price"><span class="lp-plan-amount">€2.90</span><span class="lp-plan-period">/ month</span></div>
+        <p class="lp-plan-note"><strong>1 day free</strong>, then €2.90 every month.</p>
+        <ul class="lp-plan-perks">
+          <li>Lite build and the Lite cloak</li>
+          <li>5% off everything in the store</li>
+          <li>Cancel anytime</li>
+        </ul>
+        <a class="lp-cta lp-cta--pink lp-plan-cta js-lite-cta" href="https://whop.com/checkout/plan_oKGeLuyTvJb5u">Get 1 day free</a>
+      </article>
+      <article class="lp-plan lp-plan--annual js-lite-plan" data-plan="annual">
+        <div class="lp-plan-ribbon">Best value</div>
+        <div class="lp-plan-top">
+          <span class="lp-plan-name">Annual</span>
+          <span class="lp-plan-save">2 months free</span>
+          <span class="lite-plan-current js-lite-current" hidden>Your plan</span>
+        </div>
+        <div class="lp-plan-price"><span class="lp-plan-amount">€2.49</span><span class="lp-plan-period">/ month</span></div>
+        <p class="lp-plan-note"><strong>€29.90</strong> once a year <s>€34.80</s></p>
+        <ul class="lp-plan-perks">
+          <li>Everything in Monthly</li>
+          <li><strong>Lite Year</strong> cloak, annual only</li>
+          <li>10% off everything in the store</li>
+          <li>One payment, no monthly renewals</li>
+        </ul>
+        <a class="lp-cta lp-cta--gold lp-plan-cta js-lite-cta" href="https://whop.com/checkout/plan_YDenpzviXSDXW">Subscribe</a>
+      </article>
+    </div>
+    <p class="lp-fine">Payments are handled by Whop. By subscribing you agree to our <a href="https://frostclient.eu/terms">Terms of Service</a>.</p>
+  </section>
+
+  <section class="lp-section lp-faq-section" aria-labelledby="lpFaqTitle">
+    <div class="lp-section-head lp-section-head--center">
+      <div class="store-eyebrow">FAQ</div>
+      <h2 class="home-section-title" id="lpFaqTitle">Before you subscribe</h2>
+    </div>
+    <div class="lp-faq">
+      <details>
+        <summary>How do I get Lite after paying?</summary>
+        <p>Sign in to the store with Discord and check out. Lite unlocks on that Discord account right away. Open the Frost Launcher, sign in with the same Discord account and pick a Lite instance.</p>
+      </details>
+      <details>
+        <summary>What happens after the free trial?</summary>
+        <p>The trial on the monthly plan lasts 1 day. If you keep it, it continues at €2.90 a month. Cancel before the day ends and you pay nothing.</p>
+      </details>
+      <details>
+        <summary>How do I cancel?</summary>
+        <p>Anytime on the <a href="https://frostclient.eu/lite/cancel">cancel page</a>. There is no minimum period on the monthly plan.</p>
+      </details>
+      <details>
+        <summary>Can I switch from monthly to annual?</summary>
+        <p>Yes. Sign in, and the Annual card above turns into a "Switch to annual" button.</p>
+      </details>
+      <details>
+        <summary>Is regular Frost still free?</summary>
+        <p>Yes. Frost Client stays free. Lite is an optional upgrade for players who want every frame and the extra perks.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="lp-final" aria-labelledby="lpFinalTitle">
+    <h2 id="lpFinalTitle">Your first day of Lite is on us.</h2>
+    <p id="liteAccountText">Sign in with Discord to check your subscription. Lite activates in the Frost Launcher, signed in with the same Discord account.</p>
+    <div class="lp-final-actions">
+      <a class="lp-cta lp-cta--pink" id="lpFinalCta" href="/cart">Start free trial</a>
+      <button type="button" class="lp-cta lp-cta--ghost" id="liteSigninBtn">Sign in with Discord</button>
+      <a class="lp-cta lp-cta--ghost" href="https://frostclient.eu/?openDownload">Download the launcher</a>
     </div>
   </section>
 </main>
