@@ -80,7 +80,7 @@
           showError('Network error while contacting the server. Please try again.');
       });
   }
-  const states = ['stateVerifying', 'stateLogin', 'stateSuccess', 'stateNoPayment', 'stateError'];
+  const states = ['stateVerifying', 'stateLogin', 'stateSuccess', 'stateLite', 'stateLiteJoin', 'stateNoPayment', 'stateError'];
 
   function show(id) {
     states.forEach(function (s) {
@@ -119,6 +119,10 @@
           setTimeout(function () {
               claim(paymentId, attempt + 1);
           }, 2500 * (attempt + 1));
+          return;
+        }
+        if (data && data.error === 'lite_purchase') {
+          claimLite(paymentId, 0);
           return;
         }
         if (!data || !data.ok) {
@@ -170,6 +174,69 @@
       });
   }
 
+  function claimLite(paymentId, attempt) {
+    const token = Store.loadToken();
+    if (!token) {
+      show('stateLogin');
+      return;
+    }
+    show('stateVerifying');
+    Store.fetchJsonWithRetry(Store.apiUrl + '?action=liteClaim&token=' + encodeURIComponent(token)
+      + '&payment_id=' + encodeURIComponent(paymentId), { cache: 'no-store' }, 2)
+      .then(function (data) {
+        if (data && !data.ok && CLAIM_TRANSIENT[data.error] && attempt < CLAIM_RETRIES) {
+          setTimeout(function () {
+              claimLite(paymentId, attempt + 1);
+          }, 2500 * (attempt + 1));
+          return;
+        }
+        if (data && data.ok) {
+          try {
+              sessionStorage.removeItem(PAYMENT_ID_KEY);
+          } catch (e) {}
+          Store.refreshProfile();
+          const annual = data.plan === 'annual';
+          document.getElementById('liteLauncherBtn').className = 'detail-cta ' + (annual ? 'cta-annual' : 'cta-lite');
+          document.getElementById('liteYearNote').hidden = !annual;
+          show('stateLite');
+          return;
+        }
+        if (data && data.error === 'needs_guild_join') {
+          show('stateLiteJoin');
+          return;
+        }
+        if (data && data.error === 'token_expired') {
+          Store.clearAuth();
+          show('stateLogin');
+          return;
+        }
+        const messages = {
+          already_claimed_by_other: 'This purchase was already claimed by a different Discord account.',
+          payment_not_found: "We couldn't find that purchase. Please try again or contact support.",
+          payment_not_paid: 'This purchase is not marked as paid yet. Try again in a minute.',
+          no_whop_user: "We couldn't find an account tied to this purchase.",
+          role_grant_failed: "Discord wouldn't let us activate Lite. Please contact support.",
+          whop_error: 'Whop could not be reached. Please try again.',
+          subscription_inactive: "This subscription isn't active right now. If you just paid, wait a minute and try again.",
+          busy: 'Our server is busy right now. Please try again in a minute.'
+        };
+        const trialUsed = data && data.error === 'subscription_inactive' && /trial_already_used/.test(String(data.detail || ''));
+        showError(trialUsed ? 'A free trial was already used on this Discord account.' : (messages[data && data.error] || 'Something went wrong activating Lite.'), trialUsed || (data && data.error === 'busy') ? '' : data && data.detail);
+      })
+      .catch(function () {
+          showError('Network error while contacting the server. Please try again.');
+      });
+  }
+
+  document.getElementById('liteJoinBtn').addEventListener('click', function () {
+    const paymentId = storedPaymentId();
+    if (!paymentId) {
+      show('stateNoPayment');
+      return;
+    }
+    Store.startLogin('ty', '.p.' + paymentId, true);
+  });
+
   document.getElementById('claimLoginBtn').addEventListener('click', function () {
     const paymentId = storedPaymentId();
     if (storedCartId()) {
@@ -180,7 +247,7 @@
       show('stateNoPayment');
       return;
     }
-    Store.startLogin('ty', '.p.' + paymentId);
+    Store.startLogin('ty', '.p.' + paymentId, true);
   });
 
   document.getElementById('retryBtn').addEventListener('click', function () {

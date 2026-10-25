@@ -955,6 +955,16 @@ nav.nav-scrolled {
 .claim-state.active {
   display: block;
 }
+.claim-actions {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+}
+.claim-secondary-link {
+  font-size: 14px; color: var(--muted); text-decoration: none;
+  transition: color 0.2s;
+}
+.claim-secondary-link:hover {
+  color: var(--text);
+}
 .claim-spinner {
   width: 38px; height: 38px; margin: 0 auto 24px;
   border: 3px solid rgba(255,122,26,0.2); border-top-color: var(--store-accent);
@@ -2254,6 +2264,30 @@ footer {
 }
 .cart-lite-banner .cart-item-info {
   flex: 1;
+}
+.cart-lite-banner {
+  position: relative; overflow: hidden;
+}
+.cart-lite-banner > :not(.featured-lite-rain) {
+  position: relative; z-index: 1;
+}
+.cart-lite-bolt {
+  position: absolute; top: 0;
+  animation: cart-lite-bolt-fall linear infinite;
+  will-change: transform;
+}
+.cart-lite-bolt svg {
+  display: block; width: 100%; height: 100%;
+}
+.cart-lite-banner--monthly .cart-lite-bolt {
+  color: #ffb8fc;
+}
+.cart-lite-banner--annual .cart-lite-bolt {
+  color: #ffe066;
+}
+@keyframes cart-lite-bolt-fall {
+  from { transform: translateY(-34px) rotate(var(--tilt, 0deg)); }
+  to { transform: translateY(130px) rotate(var(--tilt, 0deg)); }
 }
 .cart-lite-banner--monthly {
   background: linear-gradient(120deg, rgba(255,115,250,0.16), rgba(28,28,30,0.96) 62%);

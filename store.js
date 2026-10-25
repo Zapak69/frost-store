@@ -43,6 +43,7 @@
   const CAPES_BASE = 'https://bot.frostclient.eu/launcher/capes/';
   const DISCORD_CLIENT_ID = '1512834635640475898';
   const REDIRECT_URI_STORE = 'https://store.frostclient.eu';
+  const JOIN_KEY = 'frostStoreJoinServer';
   const TOKEN_KEY = 'frostToken';
   const USER_KEY = 'frostStoreUser';
   const PROFILE_KEY = 'frostStoreProfile';
@@ -135,8 +136,12 @@
       }
   });
 
-  function startLogin(redirectKind, extraState) {
+  function startLogin(redirectKind, extraState, joinServer) {
     setAuthPending(true);
+    try {
+      if (joinServer) sessionStorage.setItem(JOIN_KEY, '1');
+      else sessionStorage.removeItem(JOIN_KEY);
+    } catch (e) {}
     let csrfState = '';
     try {
       const buf = new Uint8Array(16);
@@ -152,7 +157,7 @@
       + '?client_id=' + encodeURIComponent(DISCORD_CLIENT_ID)
       + '&response_type=code'
       + '&redirect_uri=' + encodeURIComponent(redirectUri)
-      + '&scope=identify'
+      + '&scope=' + encodeURIComponent(joinServer ? 'identify guilds.join' : 'identify')
       + '&state=' + state;
   }
 
@@ -224,7 +229,12 @@
   }
 
   function exchangeCode(code, redirectKind) {
-    const url = STORE_API_URL + '?action=storeAuth&code=' + encodeURIComponent(code) + '&rd=' + encodeURIComponent(redirectKind || 'store');
+    let join = false;
+    try {
+      join = sessionStorage.getItem(JOIN_KEY) === '1';
+      sessionStorage.removeItem(JOIN_KEY);
+    } catch (e) {}
+    const url = STORE_API_URL + '?action=storeAuth&code=' + encodeURIComponent(code) + '&rd=' + encodeURIComponent(redirectKind || 'store') + (join ? '&join=1' : '');
     let sawNetworkError = false;
     function attempt(n) {
       return fetch(url, { cache: 'no-store' }).then(function (r) {
@@ -935,7 +945,30 @@
     });
   }
 
+  function buildLiteRain(count, boltClass) {
+    const rain = document.createElement('span');
+    rain.className = 'featured-lite-rain';
+    rain.setAttribute('aria-hidden', 'true');
+    const BOLT = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>';
+    for (let n = 0; n < count; n++) {
+      const bolt = document.createElement('span');
+      bolt.className = boltClass;
+      const size = 12 + Math.round(Math.random() * 16);
+      bolt.style.left = (2 + Math.random() * 96).toFixed(1) + '%';
+      bolt.style.width = size + 'px';
+      bolt.style.height = size + 'px';
+      bolt.style.opacity = (0.08 + Math.random() * 0.12).toFixed(2);
+      bolt.style.animationDuration = (5 + Math.random() * 5).toFixed(2) + 's';
+      bolt.style.animationDelay = (-Math.random() * 10).toFixed(2) + 's';
+      bolt.style.setProperty('--tilt', (Math.random() * 30 - 15).toFixed(0) + 'deg');
+      bolt.innerHTML = BOLT;
+      rain.appendChild(bolt);
+    }
+    return rain;
+  }
+
   window.FrostStore = {
+    liteRain: buildLiteRain,
     botPost: botPost,
     capeColors: capeColors,
     memberPrice: memberPrice,
@@ -1640,24 +1673,7 @@
   function buildLiteBanner() {
     const banner = document.createElement('div');
     banner.className = 'featured-banner featured-banner--lite';
-    const rain = document.createElement('span');
-    rain.className = 'featured-lite-rain';
-    rain.setAttribute('aria-hidden', 'true');
-    const BOLT = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>';
-    for (let n = 0; n < 18; n++) {
-      const bolt = document.createElement('span');
-      bolt.className = 'featured-lite-bolt';
-      const size = 12 + Math.round(Math.random() * 16);
-      bolt.style.left = (2 + Math.random() * 96).toFixed(1) + '%';
-      bolt.style.width = size + 'px';
-      bolt.style.height = size + 'px';
-      bolt.style.opacity = (0.08 + Math.random() * 0.12).toFixed(2);
-      bolt.style.animationDuration = (5 + Math.random() * 5).toFixed(2) + 's';
-      bolt.style.animationDelay = (-Math.random() * 10).toFixed(2) + 's';
-      bolt.style.setProperty('--tilt', (Math.random() * 30 - 15).toFixed(0) + 'deg');
-      bolt.innerHTML = BOLT;
-      rain.appendChild(bolt);
-    }
+    const rain = Store.liteRain(18, 'featured-lite-bolt');
     banner.innerHTML = '<span class="featured-lite-glow" aria-hidden="true"></span>'
       + '<span class="featured-lite-text"><span class="featured-lite-eyebrow">FrostClient Lite</span>'
       + '<span class="featured-lite-title">More FPS. Exclusive perks.</span>'

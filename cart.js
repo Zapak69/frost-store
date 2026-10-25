@@ -162,6 +162,7 @@
     banner.appendChild(info);
     banner.appendChild(swap);
     banner.appendChild(removeButton('Remove FrostClient Lite', function () { Store.setLitePlan(null); }));
+    banner.insertBefore(Store.liteRain(14, 'cart-lite-bolt'), banner.firstChild);
     itemsEl.appendChild(banner);
     plan.capes.forEach(function (id) {
       const cape = catalog.find(function (c) { return c.id === id; });
@@ -357,8 +358,8 @@
     if (lite) promoMsg.hidden = true;
     document.getElementById('cartTotal').textContent = money(total);
     const loggedIn = !!Store.loadToken();
-    if (!busy) checkoutBtn.textContent = lite ? 'Checkout' : (loggedIn ? 'Checkout' : 'Sign in to check out');
-    if (!loggedIn && !lite) checkoutNote.textContent = 'Sign in with Discord so your purchase can be linked to your account.';
+    if (!busy) checkoutBtn.textContent = loggedIn ? 'Checkout' : 'Sign in to check out';
+    if (!loggedIn) checkoutNote.textContent = lite ? 'Sign in with Discord first, so Lite is active on your account right after checkout.' : 'Sign in with Discord so your purchase can be linked to your account.';
     else if (lite) checkoutNote.textContent = trial
       ? 'Nothing is charged today. Your free trial ends tomorrow, then Lite renews at ' + money(lite.price) + ' / month until you cancel.'
       : 'Checkout is handled securely by Whop. Lite unlocks in the Frost Launcher right after you subscribe.';
@@ -441,6 +442,10 @@
     if (busy) return;
     const litePlan = currentLite();
     if (litePlan) {
+      if (!Store.loadToken()) {
+        Store.startLogin('store', '.k', true);
+        return;
+      }
       const code = quote && quote.promoCode && quote.discountPercent ? quote.promoCode : '';
       Store.setLitePlan(null);
       window.location.href = litePlan.checkout + (code ? '/?promoCode=' + encodeURIComponent(code) : '');
