@@ -75,6 +75,12 @@
       <div class="cart-row cart-row--min" id="cartMinRow" hidden><span>Minimum order charge</span><span id="cartMinAdd">+€0.00</span></div>
       <div class="cart-row cart-row--total"><span id="cartTotalLabel">Total</span><span id="cartTotal">€0.00</span></div>
       <div class="cart-row cart-row--later" id="cartTomorrowRow" hidden><span>Tomorrow</span><span id="cartTomorrow">€0.00</span></div>
+      <label class="cart-terms" id="cartTerms">
+        <input type="checkbox" id="cartTermsCheck"/>
+        <span class="cart-terms-box" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <span class="cart-terms-text">I have read and agree to the <a href="https://frostclient.eu/terms" target="_blank" rel="noopener">Terms of Service</a> and <a href="https://frostclient.eu/privacy" target="_blank" rel="noopener">Privacy Policy</a>. I understand my purchase is delivered right away and all payments are final.</span>
+      </label>
+      <p class="cart-terms-error" id="cartTermsError" hidden>Please accept the Terms of Service to continue.</p>
       <button type="button" class="detail-cta cta-buy cart-checkout" id="cartCheckoutBtn">Checkout</button>
       <div class="detail-cta-note" id="cartCheckoutNote">Checkout is handled securely by Whop. Your cloaks unlock right after payment.</div>
     </aside>

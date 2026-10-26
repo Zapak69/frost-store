@@ -7,6 +7,25 @@
   const promoMsg = document.getElementById('cartPromoMsg');
   const checkoutBtn = document.getElementById('cartCheckoutBtn');
   const checkoutNote = document.getElementById('cartCheckoutNote');
+  const termsWrap = document.getElementById('cartTerms');
+  const termsCheck = document.getElementById('cartTermsCheck');
+  const termsError = document.getElementById('cartTermsError');
+
+  function termsAccepted() {
+    if (termsCheck.checked) return true;
+    termsError.hidden = false;
+    termsWrap.classList.remove('is-error');
+    void termsWrap.offsetWidth;
+    termsWrap.classList.add('is-error');
+    termsCheck.focus();
+    return false;
+  }
+
+  termsCheck.addEventListener('change', function () {
+    if (!termsCheck.checked) return;
+    termsError.hidden = true;
+    termsWrap.classList.remove('is-error');
+  });
   const PENDING_KEY = 'frostStorePendingCart';
   const PROMO_KEY = 'frostStoreCartPromo';
   const ERRORS = {
@@ -446,6 +465,7 @@
         Store.startLogin('store', '.k', true);
         return;
       }
+      if (!termsAccepted()) return;
       const code = quote && quote.promoCode && quote.discountPercent ? quote.promoCode : '';
       Store.setLitePlan(null);
       window.location.href = litePlan.checkout + (code ? '/?promoCode=' + encodeURIComponent(code) : '');
@@ -457,6 +477,7 @@
     }
     const ids = Store.getCart();
     if (!ids.length) return;
+    if (!termsAccepted()) return;
     busy = true;
     checkoutBtn.disabled = true;
     checkoutBtn.classList.add('is-loading');
