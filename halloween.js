@@ -1,12 +1,6 @@
-/* Injects the Halloween decoration into every page. Pure decoration: one fixed, click-through
-   layer that is appended once and never touches the page's own markup, so nothing here can break
-   a layout or swallow an input. */
 (function () {
   if (document.querySelector('.hw-decor')) return;
 
-  // One corner web. Drawn rather than shipped as an image so it inherits the theme colour and
-  // stays sharp at any size: a few anchor threads from the corner, then sagging cross threads
-  // strung between them.
   function web(size, threads, rings) {
     const parts = [];
     for (let i = 0; i <= threads; i++) {
@@ -21,7 +15,6 @@
         const a2 = (Math.PI / 2) * ((i + 1) / threads);
         const x1 = Math.cos(a1) * radius, y1 = Math.sin(a1) * radius;
         const x2 = Math.cos(a2) * radius, y2 = Math.sin(a2) * radius;
-        // pull the midpoint toward the corner so each span sags like real silk
         const mid = (a1 + a2) / 2;
         const cx = Math.cos(mid) * radius * 0.82, cy = Math.sin(mid) * radius * 0.82;
         if (i === 0) d += `M${x1.toFixed(1)} ${y1.toFixed(1)}`;
@@ -52,7 +45,6 @@
     `<div class="hw-nav-web">${web(100, 5, 3)}</div>` +
     `<div class="hw-spider">${spider}</div>`;
 
-  // index.html already has its own particle canvas, so embers there would be doubled up.
   if (!document.getElementById('particles')) {
     for (let i = 0; i < 14; i++) {
       const e = document.createElement('span');

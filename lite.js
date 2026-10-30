@@ -47,9 +47,6 @@
     return m ? Number(m[1]) : 0;
   }
 
-  // Only shown when the numbers actually went up - a review whose FPS dropped still gets listed
-  // for its text, but the store is not the place to advertise the drop. Same rule the main site
-  // and the admin review list use.
   function hasFps(review) {
     const before = Number(review.fpsBefore);
     const after = Number(review.fpsAfter);
@@ -57,8 +54,6 @@
       && !isNaN(before) && !isNaN(after) && after > before;
   }
 
-  // The website drops these from /reviews and the homepage; the store was not doing the same, so
-  // a review reporting a drop could still be picked as one of the four shown here.
   function worseFps(review) {
     const before = Number(review.fpsBefore);
     const after = Number(review.fpsAfter);

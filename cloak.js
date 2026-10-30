@@ -708,9 +708,6 @@
     (function step() {
       const frame = animFrames[idx];
       idx = (idx + 1) % animFrames.length;
-      // Redrawing straight into the viewer's own cape canvas (same approach as the launcher
-      // wardrobe) - repeatedly calling viewer.loadCape(canvas) here silently stops updating
-      // the rendered texture after the first frame, even though it doesn't throw.
       try {
         const ctx = viewer.capeCanvas.getContext('2d');
         ctx.clearRect(0, 0, viewer.capeCanvas.width, viewer.capeCanvas.height);
