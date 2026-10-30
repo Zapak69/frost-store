@@ -182,14 +182,11 @@
       showStoreToast(params.get('error') === 'access_denied' ? 'Sign-in was cancelled.' : 'Discord sign-in failed. Please try again.');
       return null;
     }
-    if (storedState) {
-      if (!returnedState.startsWith(storedState)) {
-        showStoreToast('Sign-in session mismatch. Please try signing in again.');
-        return null;
-      }
-      return { code: code, state: returnedState.slice(storedState.length) };
+    if (!storedState || !returnedState.startsWith(storedState)) {
+      showStoreToast('Sign-in session mismatch. Please try signing in again.');
+      return null;
     }
-    return { code: code, state: returnedState.replace(/^[a-f0-9]{32}/, '') };
+    return { code: code, state: returnedState.slice(storedState.length) };
   }
 
   let profileCache = null;
