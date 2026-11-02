@@ -107,6 +107,9 @@
     const litePct = profile && profile.liteActive ? Number(profile.liteDiscountPercent) || 0 : 0;
     const total = litePct ? Math.round(afterBundle * (1 - litePct / 100) * 100) / 100 : afterBundle;
     const liteCls = litePct >= 10 ? ' bundle-badge--annual' : ' bundle-badge--lite';
+    const onSale = Store.saleActive() && missing.some(function (c) { return c.store.blackFriday; });
+    const wasSum = onSale ? Math.round(missing.reduce(function (s, c) { return s + Number(c.store.blackFriday ? c.store.originalPrice : c.store.price); }, 0) * 100) / 100 : sum;
+    const dealPct = onSale ? Math.round((1 - afterBundle / wasSum) * 100) : (applies ? Math.round(rate * 100) : 0);
     if (missing.length) {
       const priceRow = document.createElement('div');
       priceRow.className = 'bundle-price';
@@ -114,21 +117,21 @@
       now.className = 'bundle-price-now';
       now.textContent = money(total);
       priceRow.appendChild(now);
-      if (applies || litePct) {
+      if (applies || litePct || onSale) {
         const was = document.createElement('s');
         was.className = 'bundle-price-was';
-        was.textContent = money(sum);
+        was.textContent = money(wasSum);
         priceRow.appendChild(was);
         const badge = document.createElement('span');
-        badge.className = 'bundle-badge' + (litePct ? liteCls : '');
-        badge.textContent = '−' + ((applies ? Math.round(rate * 100) : 0) + litePct) + '%' + (litePct ? ' Lite' : '');
+        badge.className = 'bundle-badge' + (litePct ? liteCls : '') + (onSale ? ' bundle-badge--bf' : '');
+        badge.textContent = '−' + (dealPct + litePct) + '%' + (litePct ? ' Lite' : '');
         badge.title = litePct ? 'Your FrostClient Lite discount is already included' : '';
         priceRow.appendChild(badge);
       }
       box.appendChild(priceRow);
       const sub = document.createElement('p');
       sub.className = 'bundle-note';
-      sub.textContent = (ownedPaid > 0 ? 'You own ' + ownedPaid + ' of ' + paid.length + ' · ' + missing.length + (missing.length === 1 ? ' cloak' : ' cloaks') + ' left' : missing.length + (missing.length === 1 ? ' cloak' : ' cloaks')) + (total < sum ? ' · you save ' + money(sum - total) : '');
+      sub.textContent = (ownedPaid > 0 ? 'You own ' + ownedPaid + ' of ' + paid.length + ' · ' + missing.length + (missing.length === 1 ? ' cloak' : ' cloaks') + ' left' : missing.length + (missing.length === 1 ? ' cloak' : ' cloaks')) + (total < wasSum ? ' · you save ' + money(wasSum - total) : '');
       box.appendChild(sub);
       const allIn = Store.getCartBundles().some(function (b) {
           return b.id === col.id && missing.every(function (c) { return b.capes.indexOf(c.id) !== -1; });

@@ -246,6 +246,10 @@
     return { groups: groups, used: used };
   }
 
+  function baseSum(capes) {
+    return Math.round(capes.reduce(function (t, c) { return t + Number(c.store.blackFriday ? c.store.originalPrice : c.store.price); }, 0) * 100) / 100;
+  }
+
   function bundleRow(col, capes, saved) {
     const sum = Math.round(capes.reduce(function (t, c) { return t + Number(c.store.price); }, 0) * 100) / 100;
     const live = !saved && quote && Array.isArray(quote.bundles) ? quote.bundles.find(function (b) { return b.id === col.id; }) : null;
@@ -257,7 +261,7 @@
       name: (col.name || col.id) + ' - Collection',
       sub: capes.length + (capes.length === 1 ? ' cloak: ' : ' cloaks: ') + capes.slice(0, 4).map(function (c) { return c.name || c.id; }).join(', ') + (capes.length > 4 ? ' +' + (capes.length - 4) + ' more' : ''),
       price: money(price),
-      oldPrice: price < sum ? money(sum) : '',
+      oldPrice: price < baseSum(capes) ? money(baseSum(capes)) : '',
       href: '/collection?id=' + encodeURIComponent(col.id),
       actions: [removeButton('Remove the ' + (col.name || col.id) + ' collection', function () {
         Store.removeBundleFromCart(col.id);
@@ -330,7 +334,13 @@
       document.getElementById('cartLitePrice').textContent = lite.dueNow ? money(lite.dueNow) : 'Free trial';
     }
     document.getElementById('cartSubtotalRow').hidden = !capes.length;
-    document.getElementById('cartSubtotal').textContent = money(subtotal);
+    const saleOff = Math.round(capes.reduce(function (t, c) { return t + (c.store.blackFriday ? Number(c.store.originalPrice) - Number(c.store.price) : 0); }, 0) * 100) / 100;
+    document.getElementById('cartSubtotal').textContent = money(subtotal + saleOff);
+    document.getElementById('cartSaleRow').hidden = !(saleOff > 0);
+    if (saleOff > 0) {
+      document.getElementById('cartSaleLabel').textContent = Store.sale.name + ' (' + Store.sale.capePercent + '%)';
+      document.getElementById('cartSale').textContent = '−' + money(saleOff);
+    }
     const bundles = capes.length && quote && Array.isArray(quote.bundles) ? quote.bundles
       : localGroups.filter(function (g) { return localBundleDiscount(g.col, g.capes) > 0; }).map(function (g) {
           const fullSum = g.col.capes.map(function (id) { return catalog.find(function (c) { return c.id === id; }); }).filter(purchasable).reduce(function (t, c) { return t + Number(c.store.price); }, 0);

@@ -48,6 +48,26 @@
   const USER_KEY = 'frostStoreUser';
   const PROFILE_KEY = 'frostStoreProfile';
   const OAUTH_STATE_KEY = 'frostStoreOauthState';
+  const SALE = { id: 'black-friday-2026', name: 'Black Friday', until: Date.parse('2026-12-01T00:00:00+01:00'), capePercent: 30, collectionPercent: 15 };
+  const saleBasePrices = new Map();
+
+  function saleActive() {
+    return Date.now() < SALE.until;
+  }
+
+  function applySale(data) {
+    if (!saleActive() || !Array.isArray(data)) return data;
+    data.forEach(function (cape) {
+      const store = cape && cape.store;
+      if (!store || store.subscription || !store.checkout || typeof store.price !== 'number' || !(store.price > 0)) return;
+      if (store.limitedUntil && !(Date.parse(store.limitedUntil) > Date.now())) return;
+      saleBasePrices.set(cape.id, store.price);
+      store.originalPrice = store.price;
+      store.price = Math.round(store.price * (100 - SALE.capePercent)) / 100;
+      store.blackFriday = true;
+    });
+    return data;
+  }
 
   function loadToken() {
     try {
@@ -99,6 +119,9 @@
     return fetch(url, options)
       .then(function (r) {
           return r.json();
+      })
+      .then(function (data) {
+          return url === CAPES_JSON_URL ? applySale(data) : data;
       })
       .catch(function (err) {
         if (retries > 0) {
@@ -1012,6 +1035,8 @@
     pricePill: pricePill,
     isOwned: isOwned,
     salePrice: salePrice,
+    sale: SALE,
+    saleActive: saleActive,
     buildCapeCard: buildCapeCard,
     limitedInfo: limitedInfo,
     isPartnerCape: isPartnerCape,
@@ -1068,13 +1093,30 @@
     return { until: until, text: text };
   }
 
-  function bundleRate(col, fullSum) {
+  function baseBundleRate(col, fullSum) {
     const fixed = Number(col && col.bundlePrice);
     if (isFinite(fixed) && fixed > 0) return fullSum > fixed ? (fullSum - fixed) / fullSum : 0;
     return Math.max(0, Math.min(90, Math.round(Number(col && col.bundleDiscount) || 0))) / 100;
   }
 
+  function saleBaseSum(col) {
+    return (col && col.capes || []).reduce(function (t, id) { return t + (saleBasePrices.get(String(id).toLowerCase()) || 0); }, 0);
+  }
+
+  function bundleRate(col, fullSum) {
+    const baseSum = saleActive() ? saleBaseSum(col) : 0;
+    if (!(baseSum > 0)) return baseBundleRate(col, fullSum);
+    const target = baseSum * (1 - baseBundleRate(col, baseSum)) * (100 - SALE.collectionPercent) / 100;
+    return target < fullSum ? 1 - target / fullSum : 0;
+  }
+
   function bundleLabel(col) {
+    const baseSum = saleActive() ? saleBaseSum(col) : 0;
+    if (baseSum > 0) {
+      const target = baseSum * (1 - baseBundleRate(col, baseSum)) * (100 - SALE.collectionPercent) / 100;
+      if (bundleRate(col, baseSum * (100 - SALE.capePercent) / 100) <= 0) return '';
+      return 'Bundle €' + (Math.round(target * 100) / 100).toFixed(2) + ' · −' + SALE.collectionPercent + '%';
+    }
     if (col && Number(col.bundlePrice) > 0) return 'Bundle €' + Number(col.bundlePrice).toFixed(2);
     if (col && Number(col.bundleDiscount) > 0) return 'Bundle −' + Math.round(Number(col.bundleDiscount)) + '%';
     return '';
@@ -1627,6 +1669,13 @@
     deal: 'Up to 10% off the store',
     cta: 'Learn more →'
   };
+  const BF_ITEM = {
+    bf: true,
+    href: '/cloaks',
+    name: 'Black Friday',
+    deal: '−30% cloaks · −15% collections',
+    cta: 'Shop cloaks →'
+  };
   const track = section.querySelector('.featured-track');
   const viewport = section.querySelector('.featured-viewport');
   const line = section.querySelector('.featured-line-fill');
@@ -1677,6 +1726,23 @@
     return banner;
   }
 
+  function buildBfBanner() {
+    const ms = Math.max(0, Store.sale.until - Date.now());
+    const pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    const banner = document.createElement('div');
+    banner.className = 'featured-banner featured-banner--bf';
+    banner.innerHTML = '<span class="bf-feat-copy"><span class="bf-feat-eyebrow">Until 30 November</span>'
+      + '<span class="bf-feat-title"><span>Black</span><span class="bf-outline">Friday</span></span></span>'
+      + '<span class="bf-feat-side"><span class="bf-feat-tags">'
+      + '<span class="bf-tag"><span class="bf-tag-hole"></span><span class="bf-tag-pct">−30%</span><span class="bf-tag-what">every cloak</span></span>'
+      + '<span class="bf-tag bf-tag--alt"><span class="bf-tag-hole"></span><span class="bf-tag-pct">−15%</span><span class="bf-tag-what">collections</span></span></span>'
+      + '<span class="bf-count" role="timer" aria-label="Time left">'
+      + '<span><b class="bf-c-d">' + pad(Math.floor(ms / 86400000)) + '</b><small>days</small></span>'
+      + '<span><b class="bf-c-h">' + pad(Math.floor(ms / 3600000) % 24) + '</b><small>hours</small></span>'
+      + '<span><b class="bf-c-m">' + pad(Math.floor(ms / 60000) % 60) + '</b><small>min</small></span></span></span>';
+    return banner;
+  }
+
   function buildCollectionBanner(col) {
     const banner = document.createElement('div');
     banner.className = 'featured-banner';
@@ -1720,7 +1786,8 @@
   function fillPanel(item) {
     panel.href = item.href;
     panel.classList.toggle('is-lite', !!item.lite);
-    panel.setAttribute('aria-label', item.lite ? 'Learn more about FrostClient Lite' : 'View the ' + item.name + ' collection');
+    panel.classList.toggle('is-bf', !!item.bf);
+    panel.setAttribute('aria-label', item.bf ? 'Shop the Black Friday sale' : item.lite ? 'Learn more about FrostClient Lite' : 'View the ' + item.name + ' collection');
     panelName.textContent = item.name;
     panelDeal.textContent = item.deal || '';
     panelDeal.hidden = !item.deal;
@@ -1806,7 +1873,7 @@
     if (!collections) return;
     if (built) return;
     built = true;
-    items = [LITE_ITEM].concat(collections.map(itemFromCollection));
+    items = (Store.saleActive() ? [BF_ITEM] : []).concat([LITE_ITEM], collections.map(itemFromCollection));
     track.innerHTML = '';
     dotsWrap.innerHTML = '';
     track.style.transition = 'none';
@@ -1819,8 +1886,8 @@
       const slide = document.createElement('a');
       slide.className = 'featured-slide';
       slide.href = item.href;
-      slide.setAttribute('aria-label', item.lite ? 'FrostClient Lite' : item.name + ' collection');
-      slide.appendChild(item.lite ? buildLiteBanner() : buildCollectionBanner(item.col));
+      slide.setAttribute('aria-label', item.bf ? 'Black Friday sale' : item.lite ? 'FrostClient Lite' : item.name + ' collection');
+      slide.appendChild(item.bf ? buildBfBanner() : item.lite ? buildLiteBanner() : buildCollectionBanner(item.col));
       track.appendChild(slide);
       return slide;
     });
