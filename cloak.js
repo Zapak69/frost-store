@@ -5,7 +5,7 @@
   const notFound = document.getElementById('detailNotfound');
   const info = document.getElementById('detailInfo');
   const previewPanel = document.getElementById('previewPanel');
-  const BOT_BASE = 'https://bot.frostclient.eu';
+  const BOT_BASE = 'https://api.frostclient.eu';
   const SKIN_KEY = 'frostStoreSkin';
   let viewer = null;
   let mySkinInfo = null;

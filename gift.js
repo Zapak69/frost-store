@@ -1,6 +1,6 @@
 (function () {
   const Store = window.FrostStore;
-  const BOT_BASE = 'https://bot.frostclient.eu';
+  const BOT_BASE = 'https://api.frostclient.eu';
   const SKIN_KEY = 'frostStoreSkin';
   const code = String(new URLSearchParams(window.location.search).get('c') || '').trim().toLowerCase();
   const layout = document.getElementById('detailLayout');

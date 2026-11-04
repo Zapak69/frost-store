@@ -37,10 +37,10 @@
 })();
 
 (function () {
-  const STORE_API_URL = 'https://bot.frostclient.eu/sheets';
-  const CAPES_JSON_URL = 'https://bot.frostclient.eu/launcher/capes/capes.json';
-  const COLLECTIONS_JSON_URL = 'https://bot.frostclient.eu/launcher/capes/collections.json';
-  const CAPES_BASE = 'https://bot.frostclient.eu/launcher/capes/';
+  const STORE_API_URL = 'https://api.frostclient.eu/sheets';
+  const CAPES_JSON_URL = 'https://cdn.frostclient.eu/launcher/capes/capes.json';
+  const COLLECTIONS_JSON_URL = 'https://cdn.frostclient.eu/launcher/capes/collections.json';
+  const CAPES_BASE = 'https://cdn.frostclient.eu/launcher/capes/';
   const DISCORD_CLIENT_ID = '1512834635640475898';
   const REDIRECT_URI_STORE = 'https://store.frostclient.eu';
   const JOIN_KEY = 'frostStoreJoinServer';
@@ -950,7 +950,7 @@
     return capeColorMemo[key];
   }
 
-  const BOT_API_URL = 'https://bot.frostclient.eu';
+  const BOT_API_URL = 'https://api.frostclient.eu';
 
   function botPost(path, body) {
     return fetch(BOT_API_URL + path, {

@@ -2,7 +2,7 @@
   const grid = document.getElementById('capeGrid');
   if (!grid) return;
   const Store = window.FrostStore;
-  const POPULARITY_URL = 'https://bot.frostclient.eu/store/cape-popularity';
+  const POPULARITY_URL = 'https://api.frostclient.eu/store/cape-popularity';
   const SORT_KEY = 'frostStoreSort';
   const PANEL_KEY = 'frostStoreFiltersHidden';
   const FILTERS_KEY = 'frostStoreFilters';

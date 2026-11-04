@@ -117,7 +117,7 @@
 
   const section = document.getElementById('liteReviews');
   const grid = document.getElementById('liteReviewsGrid');
-  fetch('https://bot.frostclient.eu/reviews_export.json', { cache: 'no-store' })
+  fetch('https://api.frostclient.eu/reviews_export.json', { cache: 'no-store' })
     .then(function (r) {
       if (!r.ok) throw new Error('http_' + r.status);
       return r.json();
