@@ -3233,3 +3233,30 @@ footer {
 .bundle-badge--annual {
   color: #1a1400; background: linear-gradient(100deg, #ffd60a, #ffb800);
 }
+.home-intro {
+  margin: 0 0 22px; font-size: 14px; line-height: 1.5; color: var(--muted); max-width: 760px;
+}
+.home-intro a {
+  color: var(--text);
+}
+.cart-pay-note a {
+  color: var(--text);
+}
+.cta-gift {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 14px;
+}
+.cta-gift svg {
+  width: 16px; height: 16px; flex: none;
+}
+.gift-links {
+  display: grid; gap: 14px; width: 100%; max-width: 520px; margin: 6px auto 24px; text-align: left;
+}
+.gift-link-name {
+  font-size: 13.5px; font-weight: 600; color: var(--text); margin-bottom: 6px;
+}
+.gift-link-line {
+  display: flex; gap: 8px;
+}
+.gift-link-input {
+  flex: 1; min-width: 0;
+}

@@ -295,7 +295,7 @@
         saved.className = 'cart-saved';
         const note = document.createElement('div');
         note.className = 'cart-saved-note';
-        note.textContent = 'Saved for later · cloaks can\'t be bought together with Lite. They come back once you check out or remove Lite.';
+        note.textContent = 'Saved for the next step · Lite and cloaks are two payments. Check out Lite first, then come back here and pay for these with your Lite member discount.';
         saved.appendChild(note);
         renderCapeList(saved, capes, true);
         itemsEl.appendChild(saved);
@@ -320,13 +320,16 @@
   function renderTotals(capes, lite) {
     const local = capes.reduce(function (sum, c) { return sum + Number(c.store.price); }, 0);
     const subtotal = capes.length ? (quote ? quote.subtotal : local) : 0;
-    const litePromo = lite && quote && quote.discountPercent ? quote.discountPercent : 0;
-    const pct = (capes.length || lite) && quote && quote.discountPercent ? quote.discountPercent : 0;
+    const codePromo = lite && quote && quote.discountPercent ? quote.discountPercent : 0;
+    const sale = lite ? Store.liteSale(lite.key) : null;
+    const deal = sale && sale.percent > codePromo ? sale : null;
+    const litePromo = deal ? 0 : codePromo;
+    const pct = !deal && (capes.length || lite) && quote && quote.discountPercent ? quote.discountPercent : 0;
     const localGroups = !quote && capes.length ? cartGroups(capes).groups : [];
     const localBundleOff = Math.round(localGroups.reduce(function (t, g) { return t + localBundleDiscount(g.col, g.capes); }, 0) * 100) / 100;
     const capesTotal = capes.length ? (quote ? quote.total : Math.round((local - localBundleOff) * 100) / 100) : 0;
     const round2 = function (n) { return Math.round(n * 100) / 100; };
-    const liteToday = lite ? round2(lite.dueNow * (1 - litePromo / 100)) : 0;
+    const liteToday = lite ? (deal ? deal.price : round2(lite.dueNow * (1 - litePromo / 100))) : 0;
     const total = capesTotal + liteToday;
     document.getElementById('cartLiteRow').hidden = !lite;
     if (lite) {
@@ -336,8 +339,11 @@
     document.getElementById('cartSubtotalRow').hidden = !capes.length;
     const saleOff = Math.round(capes.reduce(function (t, c) { return t + (c.store.blackFriday ? Number(c.store.originalPrice) - Number(c.store.price) : 0); }, 0) * 100) / 100;
     document.getElementById('cartSubtotal').textContent = money(subtotal + saleOff);
-    document.getElementById('cartSaleRow').hidden = !(saleOff > 0);
-    if (saleOff > 0) {
+    document.getElementById('cartSaleRow').hidden = !(saleOff > 0 || deal);
+    if (deal) {
+      document.getElementById('cartSaleLabel').textContent = Store.sale.name + ' (' + deal.percent + '%)';
+      document.getElementById('cartSale').textContent = '−' + money(round2(lite.dueNow - deal.price));
+    } else if (saleOff > 0) {
       document.getElementById('cartSaleLabel').textContent = Store.sale.name + ' (' + Store.sale.capePercent + '%)';
       document.getElementById('cartSale').textContent = '−' + money(saleOff);
     }
@@ -383,15 +389,21 @@
     if (trial) document.getElementById('cartTomorrow').textContent = money(round2(lite.price * (1 - litePromo / 100)));
     const promoWrap = promoInput.closest('.cart-promo');
     promoWrap.hidden = false;
-    document.getElementById('cartPromoLite').hidden = true;
+    const promoLite = document.getElementById('cartPromoLite');
+    promoLite.hidden = !lite || !!litePromo;
+    promoLite.textContent = deal && codePromo
+      ? Store.sale.name + ' is the bigger discount, so it is used instead of your ' + codePromo + '% code.'
+      : 'Creator and discount codes work on Lite too. Apply one here and it is carried over to the checkout.';
+    document.getElementById('cartTermsTrial').hidden = !trial;
+    document.getElementById('cartTermsFinal').hidden = trial;
     if (lite) promoMsg.hidden = true;
     document.getElementById('cartTotal').textContent = money(total);
     const loggedIn = !!Store.loadToken();
     if (!busy) checkoutBtn.textContent = loggedIn ? 'Checkout' : 'Sign in to check out';
     if (!loggedIn) checkoutNote.textContent = lite ? 'Sign in with Discord first, so Lite is active on your account right after checkout.' : 'Sign in with Discord so your purchase can be linked to your account.';
     else if (lite) checkoutNote.textContent = trial
-      ? 'Nothing is charged today. Your free trial ends tomorrow, then Lite renews at ' + money(lite.price) + ' / month until you cancel.'
-      : 'Checkout is handled securely by Whop. Lite unlocks in the Frost Launcher right after you subscribe.';
+      ? 'Nothing is charged today. Your 3-day trial starts when you check out. After it, Lite renews at ' + money(lite.price) + ' / month until you cancel.'
+      : (deal ? Store.sale.name + ' price for the first year, then ' + money(lite.price) + ' a year. ' : '') + 'Checkout is handled securely by Whop. Lite unlocks in the Frost Launcher right after you subscribe.';
     else if (quote && quote.promoIgnored) checkoutNote.textContent = 'Code ' + quote.promoIgnored + ' is added on the Whop checkout page. With a collection in your cart, you pay the total shown here.';
     else if (quote && quote.promoCode) checkoutNote.textContent = 'Code ' + quote.promoCode + ' is applied on the Whop checkout page. Your cloaks unlock right after payment.';
     else checkoutNote.textContent = 'Checkout is handled securely by Whop. Your cloaks unlock right after payment.';
@@ -476,7 +488,9 @@
         return;
       }
       if (!termsAccepted()) return;
-      const code = quote && quote.promoCode && quote.discountPercent ? quote.promoCode : '';
+      const sale = Store.liteSale(litePlan.key);
+      const own = quote && quote.promoCode && quote.discountPercent ? quote.promoCode : '';
+      const code = sale && (!own || sale.percent > quote.discountPercent) ? sale.code : own;
       Store.setLitePlan(null);
       window.location.href = litePlan.checkout + (code ? '/?promoCode=' + encodeURIComponent(code) : '');
       return;

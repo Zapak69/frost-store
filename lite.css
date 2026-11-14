@@ -75,6 +75,53 @@
 .lp-hero-micro a {
   color: var(--text);
 }
+.lp-hero-tip {
+  margin-top: 6px; font-size: 12.5px; color: var(--muted-dim);
+}
+.lp-pay {
+  list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px; margin: 26px 0 0; padding: 0; font-size: 13px; color: var(--muted);
+}
+.lp-pay li {
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.lp-pay svg {
+  width: 16px; height: 16px; flex: none; color: var(--text);
+}
+.lp-pay a {
+  color: var(--text);
+}
+.lp-gift {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px; max-width: 820px; margin: 22px auto 0; padding: 18px 22px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface);
+}
+.lp-gift-text {
+  display: grid; gap: 4px; font-size: 13.5px; line-height: 1.5; color: var(--muted);
+}
+.lp-gift-text strong {
+  font-size: 15px; color: var(--text);
+}
+.lp-pass {
+  border-color: rgba(255, 115, 250, 0.35); margin-top: 26px;
+}
+.lp-pass + .lp-gift {
+  margin-top: 12px;
+}
+.lp-pass-price {
+  margin-left: 8px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #ff9bfb; background: rgba(255, 115, 250, 0.14);
+}
+.lp-hero-tip a {
+  color: var(--muted);
+}
+.lp-gift-btn {
+  flex: none;
+}
+@media (max-width: 700px) {
+  .lp-gift {
+    flex-direction: column; align-items: stretch; text-align: center;
+  }
+}
+.lp-bf-note {
+  color: var(--text);
+}
 .lp-section {
   margin-top: 140px;
 }

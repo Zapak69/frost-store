@@ -48,11 +48,17 @@
   const USER_KEY = 'frostStoreUser';
   const PROFILE_KEY = 'frostStoreProfile';
   const OAUTH_STATE_KEY = 'frostStoreOauthState';
-  const SALE = { id: 'black-friday-2026', name: 'Black Friday', until: Date.parse('2026-12-01T00:00:00+01:00'), capePercent: 30, collectionPercent: 15 };
+  const SALE = { id: 'black-friday-2026', name: 'Black Friday', until: Date.parse('2026-12-01T00:00:00+01:00'), capePercent: 30, collectionPercent: 15, liteCode: 'BLACKFRIDAY', liteAnnualPercent: 20 };
   const saleBasePrices = new Map();
 
   function saleActive() {
     return Date.now() < SALE.until;
+  }
+
+  function liteSale(planKey) {
+    if (!saleActive() || planKey !== 'annual' || !SALE.liteCode || !SALE.liteAnnualPercent) return null;
+    const base = LITE_PLANS.annual.price;
+    return { code: SALE.liteCode, percent: SALE.liteAnnualPercent, price: Math.round(base * (100 - SALE.liteAnnualPercent)) / 100 };
   }
 
   function applySale(data) {
@@ -419,7 +425,7 @@
   const CART_KEY = 'frostStoreCart';
   const CART_LITE_KEY = 'frostStoreCartLite';
   const LITE_PLANS = {
-    monthly: { key: 'monthly', name: 'Monthly', price: 2.90, period: '/ month', checkout: 'https://whop.com/checkout/plan_oKGeLuyTvJb5u', note: '1-day free trial', dueNow: 0, capes: ['lite'] },
+    monthly: { key: 'monthly', name: 'Monthly', price: 2.90, period: '/ month', checkout: 'https://whop.com/checkout/plan_oKGeLuyTvJb5u', note: '3-day free trial', dueNow: 0, capes: ['lite'] },
     annual: { key: 'annual', name: 'Annual', price: 29.90, period: '/ year', checkout: 'https://whop.com/checkout/plan_YDenpzviXSDXW', note: '', dueNow: 29.90, capes: ['lite', 'lite_year'] }
   };
 
@@ -988,6 +994,70 @@
   window.FrostStore = {
     liteRain: buildLiteRain,
     botPost: botPost,
+    giftLiteId: 'lite-gift-month',
+    giftIcon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>',
+    startPassCheckout: function (btn) {
+      if (!loadToken()) {
+        startLogin('store', '.l', true);
+        return;
+      }
+      if (btn.disabled) return;
+      btn.disabled = true;
+      btn.classList.add('is-loading');
+      const reset = function (message) {
+        btn.disabled = false;
+        btn.classList.remove('is-loading');
+        if (message) window.FrostStore.showToast(message);
+      };
+      botPost('/store/cart-checkout', { pass: true, returnBase: window.location.origin }).then(function (data) {
+        if (data && data.ok && data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+          return;
+        }
+        if (data && data.error === 'token_expired') {
+          reset('');
+          clearAuth();
+          startLogin('store', '.l', true);
+          return;
+        }
+        reset(data && data.error === 'already_subscribed' ? 'You already have a Lite subscription, so you do not need this.' : "The checkout couldn't start. Please try again in a moment.");
+      }).catch(function () {
+        reset('Network error. Please try again.');
+      });
+    },
+    startGiftCheckout: function (ids, btn) {
+      if (!loadToken()) {
+        startLogin('store');
+        return;
+      }
+      if (btn) {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.classList.add('is-loading');
+      }
+      const reset = function (message) {
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('is-loading');
+        }
+        if (message) window.FrostStore.showToast(message);
+      };
+      botPost('/store/cart-checkout', { capes: ids, gift: true, returnBase: window.location.origin }).then(function (data) {
+        if (data && data.ok && data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+          return;
+        }
+        if (data && data.error === 'token_expired') {
+          reset('');
+          clearAuth();
+          startLogin('store');
+          return;
+        }
+        reset("The gift checkout couldn't start. Please try again in a moment.");
+      }).catch(function () {
+        reset('Network error. Please try again.');
+      });
+    },
     capeColors: capeColors,
     memberPrice: memberPrice,
     getCart: loadCart,
@@ -1036,6 +1106,7 @@
     isOwned: isOwned,
     salePrice: salePrice,
     sale: SALE,
+    liteSale: liteSale,
     saleActive: saleActive,
     buildCapeCard: buildCapeCard,
     limitedInfo: limitedInfo,
@@ -1231,7 +1302,7 @@
 
   function pricePill(cape) {
     const store = cape.store || {};
-    if (store.subscription) return { text: store.subscription === 'annual' ? 'Annual Lite' : 'Lite', cls: store.subscription === 'annual' ? 'pill-annual' : 'pill-lite' };
+    if (store.subscription) return { text: store.subscription === 'annual' ? 'Free with Annual Lite' : 'Free with Lite', cls: store.subscription === 'annual' ? 'pill-annual' : 'pill-lite' };
     if (store.price === 0 || store.price === 'free') return { text: 'Free', cls: 'pill-free' };
     if (typeof store.price === 'number') {
       const sale = salePrice(cape);
@@ -1590,6 +1661,7 @@
     const giftReturn = oauthReturn ? /\.g\.([a-z0-9]{4,32})$/.exec(oauthReturn.state || '') : null;
     const capeReturn = oauthReturn ? /\.c\.([a-z0-9_-]{1,64})$/.exec(oauthReturn.state || '') : null;
     const cartReturn = oauthReturn ? /\.k$/.test(oauthReturn.state || '') : false;
+    const liteReturn = oauthReturn ? /\.l$/.test(oauthReturn.state || '') : false;
     authFlow.then(function () {
       if (signInOk && giftReturn) {
         window.location.replace('/gift?c=' + encodeURIComponent(giftReturn[1]));
@@ -1601,6 +1673,10 @@
       }
       if (signInOk && cartReturn) {
         window.location.replace('/cart');
+        return;
+      }
+      if (signInOk && liteReturn) {
+        window.location.replace('/lite#plans');
         return;
       }
       authSettled = true;
@@ -1721,7 +1797,7 @@
     banner.innerHTML = '<span class="featured-lite-glow" aria-hidden="true"></span>'
       + '<span class="featured-lite-text"><span class="featured-lite-eyebrow">FrostClient Lite</span>'
       + '<span class="featured-lite-title">More FPS. Exclusive perks.</span>'
-      + '<span class="featured-lite-desc">Up to +400 FPS over regular Frost, exclusive Lite cloaks, priority support and up to 10% off everything in the store.</span></span>';
+      + '<span class="featured-lite-desc">Up to 90% more FPS than regular Frost, a free Lite cloak, priority support and up to 10% off everything in the store.</span></span>';
     banner.insertBefore(rain, banner.firstChild);
     return banner;
   }
@@ -1984,7 +2060,8 @@
         cta.href = CANCEL_URL;
       } else if (purchased) {
         cta.textContent = cardPlan === 'annual' ? 'Switch to annual' : 'Switch to monthly';
-        cta.href = cta.dataset.checkout;
+        const deal = Store.liteSale(cardPlan);
+        cta.href = cta.dataset.checkout + (deal ? '/?promoCode=' + encodeURIComponent(deal.code) : '');
       } else {
         cta.textContent = cta.dataset.label;
         cta.href = '/cart';

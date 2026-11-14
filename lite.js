@@ -5,6 +5,7 @@
   const heroCta = document.getElementById('lpHeroCta');
   const heroMicro = document.getElementById('lpHeroMicro');
   const finalCta = document.getElementById('lpFinalCta');
+  const heroTip = document.getElementById('lpHeroTip');
   const CANCEL_URL = 'https://frostclient.eu/lite/cancel';
   const DOWNLOAD_URL = 'https://frostclient.eu/?openDownload';
 
@@ -17,10 +18,12 @@
       heroCta.textContent = 'Download the launcher';
       heroCta.href = DOWNLOAD_URL;
       heroMicro.innerHTML = '<a href="' + CANCEL_URL + '">Manage subscription</a>';
+      heroTip.hidden = true;
     } else {
-      heroCta.textContent = 'Try Lite free for 1 day';
+      heroCta.textContent = 'Try Lite free for 3 days';
       heroCta.href = '/cart';
-      heroMicro.textContent = 'Free for 24 hours, then €2.90 / month. Cancel anytime.';
+      heroMicro.textContent = 'Free for 3 days, then €2.90 / month. Cancel anytime.';
+      heroTip.hidden = false;
     }
     if (!loggedIn) {
       accountText.textContent = 'Sign in with Discord to check your subscription. Lite activates in the Frost Launcher, signed in with the same Discord account.';
@@ -37,10 +40,41 @@
         if (el.getAttribute('href') === '/cart') Store.setLitePlan('monthly');
     });
   });
+  const passBtn = document.getElementById('litePassBtn');
+  if (passBtn) {
+    passBtn.addEventListener('click', function () {
+        Store.startPassCheckout(passBtn);
+    });
+  }
+  const giftBtn = document.getElementById('liteGiftBtn');
+  if (giftBtn) {
+    giftBtn.addEventListener('click', function () {
+        Store.startGiftCheckout([Store.giftLiteId], giftBtn);
+    });
+  }
   signinBtn.addEventListener('click', function () {
       Store.startLogin('store');
   });
   Store.onProfile(renderAccount);
+
+  (function () {
+    const deal = Store.liteSale('annual');
+    const card = document.querySelector('.js-lite-plan[data-plan="annual"]');
+    if (!deal || !card) return;
+    const money = function (n) { return '€' + n.toFixed(2); };
+    const plan = Store.litePlans.annual;
+    const note = card.querySelector('.lp-plan-note');
+    const amount = card.querySelector('.lp-plan-amount');
+    const save = card.querySelector('.lp-plan-save');
+    if (amount) amount.textContent = money(Math.floor(deal.price / 12 * 100) / 100);
+    if (note) note.innerHTML = '<strong>' + money(deal.price) + '</strong> for the first year <s>' + money(plan.price) + '</s>';
+    if (save) save.textContent = Store.sale.name + ' −' + deal.percent + '%';
+    const bf = document.getElementById('lpBfNote');
+    if (bf) {
+      bf.textContent = Store.sale.name + ': ' + deal.percent + '% off the first year of the annual plan until 30 November, applied in the cart. Renews at ' + money(plan.price) + ' a year.';
+      bf.hidden = false;
+    }
+  })();
 
   function parseStars(s) {
     const m = /(\d)/.exec(String(s || ''));

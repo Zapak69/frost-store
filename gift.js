@@ -29,8 +29,20 @@
     revoked: 'This gift is no longer available.',
     rate_limited: 'Too many attempts. Wait a minute and try again.',
     grant_failed: 'The cloak could not be added to your account right now. Try again in a moment.',
-    not_found: 'This gift link is invalid.'
+    not_found: 'This gift link is invalid.',
+    join_discord: 'Join the Frost Discord server with this account first, then claim the gift again.'
   };
+  const DISCORD_URL = 'https://discord.gg/Kn8ydsABU8';
+
+  function isLite() {
+    return !!(gift && gift.kind === 'lite');
+  }
+
+  function claimedText() {
+    return isLite()
+      ? 'Gift claimed. Lite is active on your Discord account. Open the Frost Launcher, sign in with the same account and pick a Lite instance.'
+      : 'Gift claimed. The cloak is now in your account and in the Frost Client Launcher.';
+  }
 
   function showNotFound() {
     layout.hidden = true;
@@ -51,6 +63,7 @@
   function ownsCape(profile) {
     if (!gift || !gift.cape) return false;
     if (gift.claimed || justClaimed) return true;
+    if (isLite()) return false;
     return !!(profile && profile.owned && profile.owned.indexOf(gift.cape.id) !== -1);
   }
 
@@ -85,7 +98,16 @@
       done.disabled = true;
       done.innerHTML = CHECK_ICON + '<span>Claimed</span>';
       wrap.appendChild(done);
-      wrap.appendChild(note('Gift claimed. The cloak is now in your account and in the Frost Client Launcher.'));
+      wrap.appendChild(note(claimedText()));
+      return wrap;
+    }
+    if (loggedIn && isLite() && (gift.claimed || justClaimed)) {
+      const btn = document.createElement('a');
+      btn.className = 'detail-cta cta-lite';
+      btn.href = 'https://frostclient.eu/?openDownload';
+      btn.textContent = 'Download the launcher';
+      wrap.appendChild(btn);
+      wrap.appendChild(note(claimedText()));
       return wrap;
     }
     if (loggedIn && ownsCape(profile)) {
@@ -120,7 +142,7 @@
           Store.startLogin('store', '.g.' + code);
       });
       wrap.appendChild(btn);
-      wrap.appendChild(note('Sign in with Discord so the cloak can be added to your account.'));
+      wrap.appendChild(note(isLite() ? 'Sign in with Discord so Lite can be activated on your account.' : 'Sign in with Discord so the cloak can be added to your account.'));
       return wrap;
     }
     if (claiming) {
@@ -133,8 +155,18 @@
     btn.disabled = claiming;
     btn.addEventListener('click', claim);
     wrap.appendChild(btn);
-    if (claimError) wrap.appendChild(note(claimError, true));
-    else wrap.appendChild(note('The cloak is added to your account right away.'));
+    if (claimError) {
+      wrap.appendChild(note(claimError, true));
+      if (claimError === ERROR_TEXT.join_discord) {
+        const join = document.createElement('a');
+        join.className = 'detail-cta cta-cart';
+        join.href = DISCORD_URL;
+        join.target = '_blank';
+        join.rel = 'noopener noreferrer';
+        join.textContent = 'Join the Discord';
+        wrap.appendChild(join);
+      }
+    } else wrap.appendChild(note(isLite() ? 'Lite is activated on your Discord account right away. No card, no renewal.' : 'The cloak is added to your account right away.'));
     return wrap;
   }
 
@@ -157,7 +189,7 @@
     info.innerHTML = '';
     const name = document.createElement('h1');
     name.className = 'detail-name';
-    name.textContent = gift.cape.name;
+    name.textContent = isLite() ? 'FrostClient Lite · ' + gift.days + ' days' : gift.cape.name;
     info.appendChild(name);
     const priceRow = document.createElement('div');
     priceRow.className = 'detail-price-row';
@@ -169,10 +201,18 @@
     const meta = document.createElement('div');
     meta.className = 'detail-meta';
     meta.appendChild(metaRow(gift.status === 'expired' ? 'Ended' : 'Available until', formatDateTime(gift.expiresAt)));
-    meta.appendChild(metaRow('Claims', claimsLabel()));
-    meta.appendChild(metaRow('Animated', gift.cape.animated ? 'Yes' : 'No'));
+    if (isLite()) meta.appendChild(metaRow('Includes', 'Lite build, Lite cloak, badge and Discord role'));
+    else {
+      meta.appendChild(metaRow('Claims', claimsLabel()));
+      meta.appendChild(metaRow('Animated', gift.cape.animated ? 'Yes' : 'No'));
+    }
     info.appendChild(meta);
-    if (gift.cape.description) {
+    if (isLite()) {
+      const desc = document.createElement('p');
+      desc.className = 'detail-desc';
+      desc.textContent = 'Someone bought you ' + gift.days + ' days of FrostClient Lite. It is a one-time gift: nothing renews and you never enter a card.';
+      info.appendChild(desc);
+    } else if (gift.cape.description) {
       const desc = document.createElement('p');
       desc.className = 'detail-desc';
       desc.textContent = gift.cape.description;
@@ -188,6 +228,8 @@
       claims: data.claims,
       expiresAt: data.expiresAt,
       claimed: !!data.claimed,
+      kind: data.kind || 'cape',
+      days: data.days || 0,
       cape: data.cape
     };
   }
@@ -423,7 +465,7 @@
         return;
       }
       applyGift(data);
-      document.title = gift.cape.name + ' Gift | Frost Store';
+      document.title = (isLite() ? 'FrostClient Lite' : gift.cape.name) + ' Gift | Frost Store';
       renderInfo(Store.getProfile());
       Store.onProfile(function (profile) {
           renderInfo(profile);

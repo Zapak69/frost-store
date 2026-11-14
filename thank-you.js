@@ -50,6 +50,71 @@
     show('stateSuccess');
   }
 
+  function showPassSuccess(lite) {
+    try {
+      localStorage.removeItem(PENDING_CART_KEY);
+      sessionStorage.removeItem(CART_ID_KEY);
+      sessionStorage.removeItem(PAYMENT_ID_KEY);
+    } catch (e) {}
+    Store.refreshProfile();
+    const until = new Date(lite.until);
+    const note = document.getElementById('litePassNote');
+    note.textContent = 'Your ' + lite.days + ' days run until ' + (isNaN(until.getTime()) ? 'the end of the period' : until.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })) + '. Nothing renews.';
+    note.hidden = false;
+    show('stateLite');
+  }
+
+  function showGiftSuccess(gifts, passFallback) {
+    document.getElementById('giftPassNote').hidden = !passFallback;
+    document.getElementById('giftSendNote').hidden = !!passFallback;
+    try {
+      localStorage.removeItem(PENDING_CART_KEY);
+      sessionStorage.removeItem(CART_ID_KEY);
+      sessionStorage.removeItem(PAYMENT_ID_KEY);
+    } catch (e) {}
+    document.getElementById('giftTitle').textContent = gifts.length === 1 ? 'Your gift is ready' : 'Your ' + gifts.length + ' gifts are ready';
+    const list = document.getElementById('giftLinks');
+    list.innerHTML = '';
+    gifts.forEach(function (g) {
+      const row = document.createElement('div');
+      row.className = 'gift-link-row';
+      const name = document.createElement('div');
+      name.className = 'gift-link-name';
+      name.textContent = g.name;
+      const line = document.createElement('div');
+      line.className = 'gift-link-line';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.readOnly = true;
+      input.className = 'store-search gift-link-input';
+      input.value = g.url;
+      input.setAttribute('aria-label', 'Gift link for ' + g.name);
+      input.addEventListener('focus', function () {
+          input.select();
+      });
+      const copy = document.createElement('button');
+      copy.type = 'button';
+      copy.className = 'cart-promo-btn';
+      copy.textContent = 'Copy';
+      copy.addEventListener('click', function () {
+        const done = function () {
+          copy.textContent = 'Copied';
+          setTimeout(function () {
+              copy.textContent = 'Copy';
+          }, 1800);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(g.url).then(done).catch(function () {
+          input.select();
+        });
+        else input.select();
+      });
+      line.append(input, copy);
+      row.append(name, line);
+      list.appendChild(row);
+    });
+    show('stateGift');
+  }
+
   function pollCart(cartId, tries) {
     const token = Store.loadToken();
     if (!token) {
@@ -60,7 +125,9 @@
     Store.botPost('/store/cart-claim', { cartId: cartId, paymentId: storedPaymentId() })
       .then(function (data) {
         if (data && data.ok && data.status === 'fulfilled') {
-          showCartSuccess(data.capes || []);
+          if (data.lite && data.lite.until) showPassSuccess(data.lite);
+          else if (Array.isArray(data.gifts) && data.gifts.length) showGiftSuccess(data.gifts, !!data.passFallback);
+          else showCartSuccess(data.capes || []);
           return;
         }
         if (data && data.error === 'token_expired') {
@@ -80,7 +147,7 @@
           showError('Network error while contacting the server. Please try again.');
       });
   }
-  const states = ['stateVerifying', 'stateLogin', 'stateSuccess', 'stateLite', 'stateLiteJoin', 'stateNoPayment', 'stateError'];
+  const states = ['stateVerifying', 'stateLogin', 'stateSuccess', 'stateGift', 'stateLite', 'stateLiteJoin', 'stateNoPayment', 'stateError'];
 
   function show(id) {
     states.forEach(function (s) {

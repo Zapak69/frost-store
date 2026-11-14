@@ -357,6 +357,26 @@
     return btn;
   }
 
+  function buildGift(wrap) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'detail-cta cta-cart cta-gift';
+    btn.innerHTML = Store.giftIcon + '<span>Buy as a gift</span>';
+    btn.addEventListener('click', function () {
+        Store.startGiftCheckout([cape.id], btn);
+    });
+    wrap.appendChild(btn);
+    const note = document.createElement('div');
+    note.className = 'detail-cta-note';
+    note.textContent = 'Sign in with Discord, pay once and get a link to send. Your friend claims the cloak with their own Discord account, no card needed on their side.';
+    wrap.appendChild(note);
+  }
+
+  function giftable() {
+    const store = cape.store || {};
+    return !!store.checkout && !store.subscription && Number(store.price) > 0;
+  }
+
   function buildCta(profile) {
     const store = cape.store || {};
     const owned = isOwned(profile);
@@ -383,6 +403,7 @@
       note.className = 'detail-cta-note';
       note.textContent = 'Opens the Frost Client Launcher and equips this cloak for you.';
       wrap.appendChild(note);
+      if (giftable()) buildGift(wrap);
       return wrap;
     }
     if (limited && limited.free) return buildLimitedCta(wrap, profile, limited);
@@ -390,14 +411,14 @@
       const isAnnual = store.subscription === 'annual';
       const btn = document.createElement('a');
       btn.className = 'detail-cta ' + (isAnnual ? 'cta-annual' : 'cta-lite');
-      btn.href = 'https://frostclient.eu/lite' + (isAnnual ? '?billing=annual' : '');
-      btn.textContent = isAnnual ? 'Subscribe to Annual Lite' : 'Subscribe to Lite';
+      btn.href = '/lite#plans';
+      btn.textContent = isAnnual ? 'Get Annual Lite + this cloak free' : 'Get Lite + this cloak free';
       wrap.appendChild(btn);
       const note = document.createElement('div');
       note.className = 'detail-cta-note';
       note.textContent = isAnnual
-        ? "This cloak is exclusive to the Annual Lite plan — the monthly plan doesn't include it."
-        : 'This cloak is included with every FrostClient Lite subscription.';
+        ? "This cloak is free with the Annual Lite plan. The monthly plan doesn't include it."
+        : 'This cloak is free with every FrostClient Lite subscription, including the 3-day trial.';
       wrap.appendChild(note);
       return wrap;
     }
@@ -462,9 +483,10 @@
       const note = document.createElement('div');
       note.className = 'detail-cta-note';
       note.textContent = loggedIn
-        ? 'Checkout is handled securely by Whop. The cloak unlocks right after your purchase.'
-        : 'Sign in with Discord first so the cloak can be linked to your account.';
+        ? 'Checkout is handled securely by Whop. The cloak unlocks right after your purchase. Every player who uses Frost sees it on you.'
+        : 'Sign in with Discord first so the cloak can be linked to your account. Every player who uses Frost sees it on you.';
       wrap.appendChild(note);
+      if (giftable()) buildGift(wrap);
       return wrap;
     }
     const btn = document.createElement('button');
