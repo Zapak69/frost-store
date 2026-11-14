@@ -3233,15 +3233,6 @@ footer {
 .bundle-badge--annual {
   color: #1a1400; background: linear-gradient(100deg, #ffd60a, #ffb800);
 }
-.home-intro {
-  margin: 0 0 22px; font-size: 14px; line-height: 1.5; color: var(--muted); max-width: 760px;
-}
-.home-intro a {
-  color: var(--text);
-}
-.cart-pay-note a {
-  color: var(--text);
-}
 .cta-gift {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 14px;
 }
